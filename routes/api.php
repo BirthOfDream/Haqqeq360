@@ -1,0 +1,75 @@
+<?php
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthController;
+
+Route::prefix('auth')->group(function () {
+    Route::post('register', [AuthController::class, 'register']);
+    Route::post('login', [AuthController::class, 'login']);
+    
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('logout', [AuthController::class, 'logout']);
+        Route::get('profile', [AuthController::class, 'profile']);
+    });
+});
+
+
+use App\Http\Controllers\Api\UserController\UserController;
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/users', [UserController::class, 'index']);
+    Route::post('/users', [UserController::class, 'store']);
+    Route::get('/users/{id}', [UserController::class, 'show']);
+    Route::put('/users/{id}', [UserController::class, 'update']);
+    Route::delete('/users/{id}', [UserController::class, 'destroy']);
+});
+
+use App\Http\Controllers\Api\NotificationController\NotificationController;
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('notifications', [NotificationController::class, 'index']);
+    Route::get('notifications/{id}', [NotificationController::class, 'show']);
+    Route::post('notifications', [NotificationController::class, 'store']);
+    Route::patch('notifications/{id}/read', [NotificationController::class, 'markRead']);
+    Route::patch('notifications/{id}/unread', [NotificationController::class, 'markUnread']);
+    Route::delete('notifications/{id}', [NotificationController::class, 'destroy']);
+});
+
+use App\Http\Controllers\Api\BootcampController\BootcampController;
+
+Route::get('bootcamps', [BootcampController::class, 'basicList']);
+Route::get('bootcamps/{id}', [BootcampController::class, 'details']);
+
+use App\Http\Controllers\Api\CourseController\CourseController;
+
+Route::prefix('courses')->group(function () {
+
+    // List all courses (paginated, optional limit)
+    Route::get('/', [CourseController::class, 'index']);
+
+    // Show a single course by ID
+    Route::get('/{id}', [CourseController::class, 'show']);
+
+    // Search courses by title
+    Route::get('/search', [CourseController::class, 'search']);
+
+    // Filter courses by level/mode
+    Route::get('/filter', [CourseController::class, 'filter']);
+});
+
+
+use App\Http\Controllers\Api\ProgramController\ProgramController;
+use App\Http\Controllers\Api\CategoryController\CategoryController;
+
+// Programs routes
+Route::prefix('programs')->group(function () {
+    Route::get('/', [ProgramController::class, 'index']); // List programs
+    Route::get('/{idOrSlug}', [ProgramController::class, 'show']); // Show program by ID or slug
+});
+
+// Categories routes
+Route::prefix('categories')->group(function () {
+    Route::get('/', [CategoryController::class, 'index']); // List categories
+    Route::get('/{idOrSlug}', [CategoryController::class, 'show']); // Show category by ID or slug
+});
