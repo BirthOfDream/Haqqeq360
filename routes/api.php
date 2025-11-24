@@ -109,3 +109,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('scholarship-requests', [ScholarshipRequestController::class, 'index']);
     Route::post('scholarship-requests', [ScholarshipRequestController::class, 'store']);
 });
+
+use App\Http\Controllers\Api\HeaderController\HeaderController;
+
+Route::get('headers/{idOrSlug}', [HeaderController::class, 'show']);
+Route::get('headers', [HeaderController::class, 'index']);
