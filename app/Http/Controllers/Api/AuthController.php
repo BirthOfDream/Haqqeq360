@@ -339,52 +339,111 @@ class AuthController extends Controller
      * Resend verification email
      */
     public function resendVerificationEmail(Request $request)
-    {
-        try {
-            $validator = Validator::make($request->all(), [
-                'email' => 'required|email|exists:users,email',
+{
+    try {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+        ], [
+            'email.required' => 'Email is required.',
+            'email.email' => 'Please provide a valid email address.',
+            'email.exists' => 'User not found with this email address.',
+        ]);
+
+        if ($validator->fails()) {
+            Log::warning('Resend verification email validation failed', [
+                'errors' => $validator->errors()->toArray(),
+                'ip' => $request->ip(),
             ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'message' => 'Validation failed.',
-                    'errors' => $validator->errors(),
-                ], 422);
-            }
+            return response()->json([
+                'message' => 'Validation failed.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
-            $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->first();
 
-            if ($user->email_verified_at) {
-                return response()->json([
-                    'message' => 'Email already verified.',
-                ], 200);
-            }
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found.',
+            ], 404);
+        }
 
-            $verificationToken = Str::random(64);
-            $user->update(['remember_token' => $verificationToken]);
+        if ($user->email_verified_at) {
+            return response()->json([
+                'message' => 'Email already verified.',
+            ], 200);
+        }
 
-            Mail::to($user->email)->send(new EmailVerificationMail($user, $verificationToken));
-
-            Log::info('Verification email resent', [
+        // Generate verification token
+        $verificationToken = Str::random(64);
+        
+        // Save token first, before trying to send email
+        $tokenSaved = $user->update(['remember_token' => $verificationToken]);
+        
+        if (!$tokenSaved) {
+            Log::error('Failed to save verification token', [
                 'user_id' => $user->id,
                 'email' => $user->email,
             ]);
 
             return response()->json([
-                'message' => 'Verification email sent successfully.',
-            ], 200);
+                'message' => 'Failed to generate verification token.',
+                'error' => 'Please try again later.',
+            ], 500);
+        }
+        
+        // Log to confirm token was saved
+        Log::info('Verification token saved for resend', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'token_length' => strlen($verificationToken),
+        ]);
 
-        } catch (Exception $e) {
-            Log::error('Error resending verification email', [
-                'error' => $e->getMessage(),
+        // Send verification email
+        try {
+            Mail::to($user->email)->send(new EmailVerificationMail($user, $verificationToken));
+
+            Log::info('Verification email resent successfully', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'ip' => $request->ip(),
             ]);
 
             return response()->json([
-                'message' => 'Failed to send verification email.',
-                'error' => 'Please try again.',
+                'message' => 'Verification email sent successfully. Please check your inbox.',
+                'email_sent' => true,
+            ], 200);
+
+        } catch (Exception $mailException) {
+            Log::error('Failed to send verification email', [
+                'user_id' => $user->id,
+                'email' => $user->email,
+                'error' => $mailException->getMessage(),
+                'trace' => $mailException->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => 'Verification token generated but failed to send email.',
+                'error' => 'Please try again or contact support.',
+                'email_sent' => false,
             ], 500);
         }
+
+    } catch (Exception $e) {
+        Log::error('Error resending verification email', [
+            'email' => $request->input('email'),
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'ip' => $request->ip(),
+        ]);
+
+        return response()->json([
+            'message' => 'Failed to resend verification email.',
+            'error' => 'Please try again later.',
+        ], 500);
     }
+}
 
     /**
      * Login a user

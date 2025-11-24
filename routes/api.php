@@ -4,14 +4,23 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 
-Route::prefix('auth')->group(function () {
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/verify-email', [AuthController::class, 'verifyEmail']);
-    Route::post('/resend-verification', [AuthController::class, 'resendVerificationEmail']);
-    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+use App\Http\Controllers\Api\Auth\DumpAuth;
+
+Route::post('/register', [DumpAuth::class, 'register']);
+Route::post('/login',    [DumpAuth::class, 'login']);
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/me',    [DumpAuth::class, 'me']);
+    Route::post('/logout', [DumpAuth::class, 'logout']);
 });
+// Route::prefix('auth')->group(function () {
+//     Route::post('/register', [AuthController::class, 'register']);
+//     Route::post('/login', [AuthController::class, 'login']);
+//     Route::post('/verify-email', [AuthController::class, 'verifyEmail']);
+//     Route::post('/resend-verification', [AuthController::class, 'resendVerificationEmail']);
+//     Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+//     Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+// });
 
 // Protected routes (requires authentication)
 Route::middleware('auth:sanctum')->prefix('auth')->group(function () {
@@ -87,4 +96,10 @@ use App\Http\Controllers\Api\RequestProgramController\RequestProgramController;
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('request-programs', [RequestProgramController::class, 'index']);
     Route::post('request-programs', [RequestProgramController::class, 'store']);
+});
+
+use App\Http\Controllers\Api\ContactUsController\ContactUsController;
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('contact-us', [ContactUsController::class, 'store']);
 });
