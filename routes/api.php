@@ -114,3 +114,23 @@ use App\Http\Controllers\Api\HeaderController\HeaderController;
 
 Route::get('headers/{idOrSlug}', [HeaderController::class, 'show']);
 Route::get('headers', [HeaderController::class, 'index']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('headers', [HeaderController::class, 'store']);
+});
+
+use App\Http\Controllers\Api\ProgramCategoryController\ProgramCategoryController;
+
+Route::get('/program-categories', [ProgramCategoryController::class, 'index']);          // recommended
+Route::get('/program-categories-get', [ProgramCategoryController::class, 'indexWithGet']); // uses get()
+Route::get('/program-categories/{id}', [ProgramCategoryController::class, 'show']);
+
+use App\Http\Controllers\Api\BlogCategoryController\BlogCategoryController;
+Route::get('/blog-categories', [BlogCategoryController::class, 'index']);          // recommended
+Route::get('/blog-categories-get', [BlogCategoryController::class, 'indexWithGet']); // uses get()
+Route::get('/blog-categories/{id}', [BlogCategoryController::class, 'show']);
+
+use App\Http\Controllers\Api\BlogController\BlogController;
+Route::get('/blogs', [BlogController::class, 'index']);          // recommended
+Route::get('/blogs-get', [BlogController::class, 'indexWithGet']); // uses get()
+Route::get('/blogs/{id}', [BlogController::class, 'show']);
+

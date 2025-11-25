@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class User extends Authenticatable  {
     use HasApiTokens, HasFactory, Notifiable, HasRoles,SoftDeletes;
 
-    protected $fillable = ['name','first_name','second_name','email','phone','password','role','bio','avatar'];
+    protected $fillable = ['first_name','second_name','email','phone','password','role','bio','avatar'];
     public function enrollments() { return $this->hasMany(Enrollment::class); }
     public function courses() { return $this->hasMany(Course::class, 'instructor_id'); }
     public function bootcamps() { return $this->hasMany(Bootcamp::class, 'instructor_id'); }
@@ -26,8 +26,9 @@ class User extends Authenticatable  {
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
     public function getFilamentName(): string
 {
-    return $this->name ?? 'Admin';
+    return trim(($this->first_name ?? '') . ' ' . ($this->second_name ?? '')) ?: 'Admin';
 }
 }
