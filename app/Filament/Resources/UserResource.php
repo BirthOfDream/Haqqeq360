@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -30,7 +29,11 @@ class UserResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Personal Information')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        Forms\Components\TextInput::make('first_name')
+                            ->required()
+                            ->maxLength(255),
+                        
+                        Forms\Components\TextInput::make('second_name')
                             ->required()
                             ->maxLength(255),
                         
@@ -46,43 +49,41 @@ class UserResource extends Resource
                         
                         Forms\Components\FileUpload::make('avatar')
                             ->image()
-                            ->avatar()
-                            ->imageEditor()
                             ->directory('avatars')
-                            ->visibility('public'),
-                        
-                        Forms\Components\Textarea::make('bio')
-                            ->rows(3)
-                            ->columnSpanFull(),
-                    ])
-                    ->columns(2),
+                            ->imageEditor()
+                            ->circleCropper(),
+                    ])->columns(2),
 
-                Forms\Components\Section::make('Account Settings')
+                Forms\Components\Section::make('Account Information')
                     ->schema([
+                        Forms\Components\TextInput::make('password')
+                            ->password()
+                            ->required(fn (string $context): bool => $context === 'create')
+                            ->dehydrateStateUsing(fn ($state) => Hash::make($state))
+                            ->dehydrated(fn ($state) => filled($state))
+                            ->maxLength(255)
+                            ->revealable(),
+                        
                         Forms\Components\Select::make('role')
                             ->options([
                                 'learner' => 'Learner',
                                 'instructor' => 'Instructor',
                                 'admin' => 'Admin',
                             ])
-                            ->required()
                             ->default('learner')
+                            ->required()
                             ->native(false),
-                        
-                        Forms\Components\TextInput::make('password')
-                            ->password()
-                            ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                            ->dehydrated(fn ($state) => filled($state))
-                            ->required(fn (string $context): bool => $context === 'create')
-                            ->revealable()
-                            ->maxLength(255)
-                            ->helperText('Leave blank to keep current password'),
                         
                         Forms\Components\DateTimePicker::make('email_verified_at')
-                            ->label('Email Verified At')
-                            ->native(false),
-                    ])
-                    ->columns(2),
+                            ->label('Email Verified At'),
+                    ])->columns(2),
+
+                Forms\Components\Section::make('Additional Information')
+                    ->schema([
+                        Forms\Components\Textarea::make('bio')
+                            ->rows(4)
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 
@@ -92,9 +93,13 @@ class UserResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('avatar')
                     ->circular()
-                    ->defaultImageUrl(fn ($record) => 'https://ui-avatars.com/api/?name=' . urlencode($record->name) . '&color=7F9CF5&background=EBF4FF'),
+                    ->defaultImageUrl(fn ($record) => 'https://ui-avatars.com/api/?name=' . urlencode($record->first_name . ' ' . $record->second_name)),
                 
-                Tables\Columns\TextColumn::make('name')
+                Tables\Columns\TextColumn::make('first_name')
+                    ->searchable()
+                    ->sortable(),
+                
+                Tables\Columns\TextColumn::make('second_name')
                     ->searchable()
                     ->sortable(),
                 
@@ -105,39 +110,22 @@ class UserResource extends Resource
                 
                 Tables\Columns\TextColumn::make('phone')
                     ->searchable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 
                 Tables\Columns\BadgeColumn::make('role')
                     ->colors([
-                        'success' => 'admin',
-                        'warning' => 'instructor',
                         'primary' => 'learner',
-                    ])
-                    ->icons([
-                        'heroicon-o-shield-check' => 'admin',
-                        'heroicon-o-academic-cap' => 'instructor',
-                        'heroicon-o-user' => 'learner',
+                        'success' => 'instructor',
+                        'danger' => 'admin',
                     ])
                     ->sortable(),
                 
                 Tables\Columns\IconColumn::make('email_verified_at')
                     ->label('Verified')
                     ->boolean()
-                    ->sortable()
-                    ->toggleable(),
-                
-                Tables\Columns\TextColumn::make('courses_count')
-                    ->counts('courses')
-                    ->label('Courses')
-                    ->sortable()
-                    ->toggleable()
-                    ->visible(fn () => true),
-                
-                Tables\Columns\TextColumn::make('enrollments_count')
-                    ->counts('enrollments')
-                    ->label('Enrollments')
-                    ->sortable()
-                    ->toggleable(),
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->sortable(),
                 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -160,16 +148,15 @@ class UserResource extends Resource
                         'learner' => 'Learner',
                         'instructor' => 'Instructor',
                         'admin' => 'Admin',
-                    ])
-                    ->multiple(),
+                    ]),
                 
                 Tables\Filters\Filter::make('verified')
-                    ->label('Email Verified')
-                    ->query(fn (Builder $query): Builder => $query->whereNotNull('email_verified_at')),
+                    ->query(fn (Builder $query): Builder => $query->whereNotNull('email_verified_at'))
+                    ->label('Verified Users'),
                 
                 Tables\Filters\Filter::make('unverified')
-                    ->label('Email Unverified')
-                    ->query(fn (Builder $query): Builder => $query->whereNull('email_verified_at')),
+                    ->query(fn (Builder $query): Builder => $query->whereNull('email_verified_at'))
+                    ->label('Unverified Users'),
                 
                 Tables\Filters\TrashedFilter::make(),
             ])
@@ -185,24 +172,15 @@ class UserResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
-                    
-                    Tables\Actions\BulkAction::make('verify_email')
-                        ->label('Verify Email')
-                        ->icon('heroicon-o-check-badge')
-                        ->requiresConfirmation()
-                        ->action(fn ($records) => $records->each->update(['email_verified_at' => now()]))
-                        ->deselectRecordsAfterCompletion(),
                 ]),
-            ])
-            ->defaultSort('created_at', 'desc');
+            ]);
     }
 
     public static function getRelations(): array
     {
         return [
-            RelationManagers\EnrollmentsRelationManager::class,
-            RelationManagers\CoursesRelationManager::class,
-            RelationManagers\BootcampsRelationManager::class,
+            // Add relation managers here if needed
+            // e.g., RelationManagers\EnrollmentsRelationManager::class,
         ];
     }
 
@@ -221,8 +199,7 @@ class UserResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ])
-            ->withTrashed();
+            ]);
     }
 
     public static function getNavigationBadge(): ?string
