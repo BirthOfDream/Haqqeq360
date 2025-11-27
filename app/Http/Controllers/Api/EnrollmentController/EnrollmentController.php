@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
 
-use App\Actions\Enrollment\{
+use App\Actions\Enrollments\{
     CreateEnrollmentAction,
     UpdateEnrollmentAction,
     DeleteEnrollmentAction,

@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\BootcampResource\Pages;
+use App\Filament\Resources\BootCampResource\Pages;
 use App\Models\Bootcamp;
 use App\Models\User;
 use Filament\Forms;
@@ -15,7 +15,7 @@ use Filament\Infolists\Infolist;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class BootcampResource extends Resource
+class BootCampResource extends Resource
 {
     protected static ?string $model = Bootcamp::class;
 
@@ -400,10 +400,10 @@ class BootcampResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListBootcamps::route('/'),
-            'create' => Pages\CreateBootcamp::route('/create'),
-            'view' => Pages\ViewBootcamp::route('/{record}'),
-            'edit' => Pages\EditBootcamp::route('/{record}/edit'),
+            'index' => Pages\ListBootCamps::route('/'),
+            'create' => Pages\CreateBootCamp::route('/create'),
+            'view' => Pages\ViewBootCamp::route('/{record}'),
+            'edit' => Pages\EditBootCamp::route('/{record}/edit'),
         ];
     }
 

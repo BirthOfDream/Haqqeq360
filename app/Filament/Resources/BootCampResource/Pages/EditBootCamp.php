@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Filament\Resources\BootcampResource\Pages;
+namespace App\Filament\Resources\BootCampResource\Pages;
 
-use App\Filament\Resources\BootcampResource;
+use App\Filament\Resources\BootCampResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Notifications\Notification;
 
-class EditBootcamp extends EditRecord
+class EditBootCamp extends EditRecord
 {
-    protected static string $resource = BootcampResource::class;
+    protected static string $resource = BootCampResource::class;
 
     protected function getHeaderActions(): array
     {

@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\BootcampResource\Pages;
+namespace App\Filament\Resources\BootCampResource\Pages;
 
-use App\Filament\Resources\BootcampResource;
+use App\Filament\Resources\BootCampResource;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Notifications\Notification;
 
-class CreateBootcamp extends CreateRecord
+class CreateBootCamp extends CreateRecord
 {
-    protected static string $resource = BootcampResource::class;
+    protected static string $resource = BootCampResource::class;
 
     protected function getRedirectUrl(): string
     {

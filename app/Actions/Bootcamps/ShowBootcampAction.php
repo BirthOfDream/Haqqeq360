@@ -2,31 +2,30 @@
 
 namespace App\Actions\Bootcamps;
 
-use App\Repositories\Interfaces\BootcampRepositoryInterface;
+use App\Models\Bootcamp;
 
 class ShowBootcampAction
 {
-    protected BootcampRepositoryInterface $repo;
-
-    public function __construct(BootcampRepositoryInterface $repo)
-    {
-        $this->repo = $repo;
-    }
-
     public function execute(int $id)
     {
-        $bootcamp = $this->repo->find($id);
+        $bootcamp = Bootcamp::with([
+            'instructor:id,name,email',
+            'enrollments.user:id,name,email'
+        ])
+            ->withCount('enrollments')
+            ->find($id);
 
         if (!$bootcamp) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Bootcamp not found'
-            ], 404);
+            return null;
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => $bootcamp
-        ]);
+        // Add available seats information
+        $bootcamp->available_seats = max(0, $bootcamp->seats - $bootcamp->enrollments_count);
+        $bootcamp->is_fully_booked = $bootcamp->available_seats === 0;
+        $bootcamp->enrollment_percentage = $bootcamp->seats > 0 
+            ? round(($bootcamp->enrollments_count / $bootcamp->seats) * 100, 2)
+            : 0;
+
+        return $bootcamp;
     }
 }

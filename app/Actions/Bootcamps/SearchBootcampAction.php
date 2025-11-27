@@ -4,28 +4,16 @@ namespace App\Actions\Bootcamps;
 
 use App\Models\Bootcamp;
 
-class ListBootcampsBasicAction
+class SearchBootcampAction
 {
-    public function execute(int $limit = 10)
+    public function execute(string $searchTerm, int $limit = 10)
     {
         $bootcamps = Bootcamp::with(['instructor:id,name,email'])
             ->withCount('enrollments')
-            ->select([
-                'id',
-                'title',
-                'slug',
-                'description',
-                'duration_weeks',
-                'level',
-                'start_date',
-                'mode',
-                'seats',
-                'certificate',
-                'cover_image',
-                'instructor_id',
-                'created_at',
-                'updated_at'
-            ])
+            ->where(function ($query) use ($searchTerm) {
+                $query->where('title', 'like', "%{$searchTerm}%")
+                    ->orWhere('description', 'like', "%{$searchTerm}%");
+            })
             ->paginate($limit);
 
         // Add available seats to each bootcamp

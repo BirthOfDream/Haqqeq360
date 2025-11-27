@@ -1,7 +1,7 @@
 <?php
 // File: app/Filament/Resources/BootcampResource/Pages/ListBootcamps.php
 
-namespace App\Filament\Resources\BootcampResource\Pages;
+namespace App\Filament\Resources\BootCampResource\Pages;
 
 use App\Filament\Resources\BootcampResource;
 use Filament\Actions;
@@ -9,7 +9,7 @@ use Filament\Resources\Pages\ListRecords;
 use Filament\Resources\Components\Tab;
 use Illuminate\Database\Eloquent\Builder;
 
-class ListBootcamps extends ListRecords
+class ListBootCamps extends ListRecords
 {
     protected static string $resource = BootcampResource::class;
 

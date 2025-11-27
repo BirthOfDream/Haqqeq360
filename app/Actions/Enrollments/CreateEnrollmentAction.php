@@ -2,67 +2,114 @@
 
 namespace App\Actions\Enrollments;
 
-use App\Repositories\Contracts\EnrollmentRepositoryInterface;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Validator;
 use App\Models\Enrollment;
+use App\Models\Course;
+use App\Models\Bootcamp;
+use Illuminate\Support\Facades\DB;
 
 class CreateEnrollmentAction
 {
-    protected $repo;
-
-    public function __construct(EnrollmentRepositoryInterface $repo)
+    public function execute(int $userId, string $enrollableType, int $enrollableId)
     {
-        $this->repo = $repo;
-    }
+        // Determine the model based on type
+        $model = $enrollableType === 'course' ? Course::class : Bootcamp::class;
+        
+        // Find the enrollable item
+        $enrollable = $model::withCount('enrollments')->find($enrollableId);
+        
+        if (!$enrollable) {
+            return [
+                'success' => false,
+                'message' => ucfirst($enrollableType) . ' not found',
+                'code' => 'NOT_FOUND'
+            ];
+        }
 
-    public function execute(array $data): Enrollment
-    {
-        $user = Auth::user();
+        // Check if seats are available
+        $availableSeats = max(0, $enrollable->seats - $enrollable->enrollments_count);
+        
+        if ($availableSeats <= 0) {
+            return [
+                'success' => false,
+                'message' => 'No seats available. This ' . $enrollableType . ' is fully booked.',
+                'code' => 'FULLY_BOOKED',
+                'data' => [
+                    'total_seats' => $enrollable->seats,
+                    'enrolled' => $enrollable->enrollments_count,
+                    'available' => 0
+                ]
+            ];
+        }
 
-        if (!$user->hasRole('student')) {
-            throw ValidationException::withMessages([
-                'role' => 'Only students can enroll in courses or bootcamps.'
+        // Check if user is already enrolled
+        $existingEnrollment = Enrollment::where('user_id', $userId)
+            ->where('enrollable_type', $model)
+            ->where('enrollable_id', $enrollableId)
+            ->first();
+
+        if ($existingEnrollment) {
+            return [
+                'success' => false,
+                'message' => 'You are already enrolled in this ' . $enrollableType,
+                'code' => 'ALREADY_ENROLLED'
+            ];
+        }
+
+        // Use transaction to prevent race conditions
+        DB::beginTransaction();
+        
+        try {
+            // Double-check seats availability within transaction
+            $enrollable->refresh();
+            $currentEnrollments = $enrollable->enrollments()->count();
+            
+            if ($currentEnrollments >= $enrollable->seats) {
+                DB::rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'No seats available. This ' . $enrollableType . ' is fully booked.',
+                    'code' => 'FULLY_BOOKED'
+                ];
+            }
+
+            // Create enrollment
+            $enrollment = Enrollment::create([
+                'user_id' => $userId,
+                'enrollable_type' => $model,
+                'enrollable_id' => $enrollableId,
+                'enrolled_at' => now(),
+                'status' => 'active'
             ]);
+
+            DB::commit();
+
+            // Get updated seat information
+            $enrollable->refresh();
+            $enrollable->loadCount('enrollments');
+            $remainingSeats = max(0, $enrollable->seats - $enrollable->enrollments_count);
+
+            return [
+                'success' => true,
+                'message' => 'Successfully enrolled in ' . $enrollableType,
+                'data' => [
+                    'enrollment' => $enrollment,
+                    'seats_info' => [
+                        'total_seats' => $enrollable->seats,
+                        'enrolled' => $enrollable->enrollments_count,
+                        'available' => $remainingSeats,
+                        'is_fully_booked' => $remainingSeats === 0
+                    ]
+                ]
+            ];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            return [
+                'success' => false,
+                'message' => 'Failed to create enrollment: ' . $e->getMessage(),
+                'code' => 'ENROLLMENT_FAILED'
+            ];
         }
-
-        $validator = Validator::make($data, [
-            'enrollable_type' => 'required|string|in:App\\Models\\Course,App\\Models\\Bootcamp',
-            'enrollable_id'   => 'required|integer',
-        ]);
-
-        if ($validator->fails()) {
-            throw new ValidationException($validator);
-        }
-
-        // Prevent enrolling in own course/bootcamp
-        $class = $data['enrollable_type'];
-        $target = $class::find($data['enrollable_id']);
-
-        if (!$target) {
-            throw ValidationException::withMessages(['target' => 'The enrollable item was not found.']);
-        }
-
-        if ($target->user_id === $user->id) {
-            throw ValidationException::withMessages(['forbidden' => 'You cannot enroll in your own course or bootcamp.']);
-        }
-
-        // Check for existing enrollment
-        $exists = Enrollment::where('user_id', $user->id)
-            ->where('enrollable_id', $data['enrollable_id'])
-            ->where('enrollable_type', $data['enrollable_type'])
-            ->exists();
-
-        if ($exists) {
-            throw ValidationException::withMessages(['duplicate' => 'You are already enrolled in this item.']);
-        }
-
-        return $this->repo->create([
-            'user_id' => $user->id,
-            'enrollable_id' => $data['enrollable_id'],
-            'enrollable_type' => $data['enrollable_type'],
-            'status' => 'active',
-        ]);
     }
 }

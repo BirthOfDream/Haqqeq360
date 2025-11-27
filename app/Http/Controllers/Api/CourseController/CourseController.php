@@ -17,31 +17,53 @@ class CourseController extends Controller
     {
         $limit = $request->input('limit', 10);
         $courses = $action->execute($limit);
-        return response()->json(['success' => true, 'data' => $courses]);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $courses
+        ]);
     }
 
     public function show(Request $request, int $id, ShowCourseAction $action)
     {
         $course = $action->execute($id);
+        
         if (!$course) {
-            return response()->json(['success' => false, 'message' => 'Course not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Course not found'
+            ], 404);
         }
-        return response()->json(['success' => true, 'data' => $course]);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $course
+        ]);
     }
 
     public function search(Request $request, SearchCourseAction $action)
     {
         $title = $request->input('title', '');
         $limit = $request->input('limit', 10);
+        
         $courses = $action->execute($title, $limit);
-        return response()->json(['success' => true, 'data' => $courses]);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $courses
+        ]);
     }
 
     public function filter(Request $request, FilterCourseAction $action)
     {
-        $filters = $request->only(['level', 'mode']);
+        $filters = $request->only(['level', 'mode', 'has_seats']);
         $limit = $request->input('limit', 10);
+        
         $courses = $action->execute($filters, $limit);
-        return response()->json(['success' => true, 'data' => $courses]);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $courses
+        ]);
     }
 }
