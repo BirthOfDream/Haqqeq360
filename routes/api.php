@@ -134,3 +134,24 @@ Route::get('/blogs', [BlogController::class, 'index']);          // recommended
 Route::get('/blogs-get', [BlogController::class, 'indexWithGet']); // uses get()
 Route::get('/blogs/{id}', [BlogController::class, 'show']);
 
+use App\Http\Controllers\Api\NewsController\NewsController;
+
+Route::get('/news', [NewsController::class, 'index']);
+Route::get('/news/{id}', [NewsController::class, 'show']);
+Route::post('/news', [NewsController::class, 'store']);
+
+use App\Http\Controllers\Api\SubscriberController\SubscriberController;
+
+Route::post('/subscribe', [SubscriberController::class, 'store']);
+
+
+use App\Http\Controllers\Api\WorkshopController\WorkshopController;
+
+Route::get('/workshops', [WorkshopController::class, 'index']);
+Route::get('/workshops/{id}', [WorkshopController::class, 'show']);
+
+use App\Http\Controllers\Api\DigitalProductController\DigitalProductController;
+
+Route::get('/digital-products', [DigitalProductController::class, 'index']);
+Route::get('/digital-products/{id}', [DigitalProductController::class, 'show']);
+Route::get('/digital-products/search/{keyword}', [DigitalProductController::class, 'search']); // ⭐ New Search Route
