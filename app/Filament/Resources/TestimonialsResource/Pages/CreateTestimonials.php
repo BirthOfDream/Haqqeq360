@@ -2,11 +2,11 @@
 
 namespace App\Filament\Resources\TestimonialsResource\Pages;
 
-use App\Filament\Resources\TestimonialsResource;
+use App\Filament\Resources\TestimonialResource;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateTestimonials extends CreateRecord
 {
-    protected static string $resource = TestimonialsResource::class;
+    protected static string $resource = TestimonialResource::class;
 }

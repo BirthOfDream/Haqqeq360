@@ -96,6 +96,14 @@ class CourseResource extends Resource
                             ->maxValue(52)
                             ->helperText('Course duration in weeks'),
                         
+                        Forms\Components\TextInput::make('seats')
+                            ->label('Available Seats')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(1000)
+                            ->helperText('Total number of seats available for this course')
+                            ->required(),
+                        
                         Forms\Components\Select::make('level')
                             ->options([
                                 'beginner' => 'Beginner',
@@ -177,6 +185,35 @@ class CourseResource extends Resource
                     ->sortable()
                     ->toggleable(),
                 
+                Tables\Columns\TextColumn::make('seats')
+                    ->label('Total Seats')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(),
+                
+                Tables\Columns\TextColumn::make('enrollments_count')
+                    ->counts('enrollments')
+                    ->label('Enrolled')
+                    ->sortable()
+                    ->toggleable(),
+                
+                Tables\Columns\TextColumn::make('available_seats')
+                    ->label('Available')
+                    ->state(function (Course $record): int {
+                        return max(0, $record->seats - $record->enrollments_count);
+                    })
+                    ->badge()
+                    ->color(fn (int $state): string => match (true) {
+                        $state === 0 => 'danger',
+                        $state <= 5 => 'warning',
+                        default => 'success',
+                    })
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query
+                            ->withCount('enrollments')
+                            ->orderByRaw("(seats - enrollments_count) {$direction}");
+                    }),
+                
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([
                         'secondary' => 'draft',
@@ -187,12 +224,6 @@ class CourseResource extends Resource
                         'heroicon-o-check-circle' => 'published',
                     ])
                     ->sortable(),
-                
-                Tables\Columns\TextColumn::make('enrollments_count')
-                    ->counts('enrollments')
-                    ->label('Enrollments')
-                    ->sortable()
-                    ->toggleable(),
                 
                 Tables\Columns\TextColumn::make('assignments_count')
                     ->counts('assignments')
@@ -244,6 +275,20 @@ class CourseResource extends Resource
                     ->searchable()
                     ->preload()
                     ->multiple(),
+                
+                Tables\Filters\Filter::make('seats_available')
+                    ->label('Has Available Seats')
+                    ->query(fn (Builder $query): Builder => 
+                        $query->withCount('enrollments')
+                              ->whereRaw('seats > enrollments_count')
+                    ),
+                
+                Tables\Filters\Filter::make('fully_booked')
+                    ->label('Fully Booked')
+                    ->query(fn (Builder $query): Builder => 
+                        $query->withCount('enrollments')
+                              ->whereRaw('seats <= enrollments_count')
+                    ),
                 
                 Tables\Filters\TrashedFilter::make(),
             ])
@@ -318,6 +363,7 @@ class CourseResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ])
+            ->withCount('enrollments')
             ->withTrashed();
     }
 

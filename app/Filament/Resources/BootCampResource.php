@@ -105,9 +105,12 @@ class BootcampResource extends Resource
                             ->native(false),
 
                         Forms\Components\TextInput::make('seats')
-                            ->label('Available Seats')
+                            ->label('Total Seats')
                             ->numeric()
                             ->minValue(1)
+                            ->maxValue(1000)
+                            ->required()
+                            ->helperText('Total number of seats available for this bootcamp')
                             ->suffix('seats'),
 
                         Forms\Components\Toggle::make('certificate')
@@ -162,10 +165,33 @@ class BootcampResource extends Resource
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('seats')
-                    ->label('Seats')
+                    ->label('Total Seats')
                     ->numeric()
                     ->sortable()
                     ->toggleable(),
+
+                Tables\Columns\TextColumn::make('enrollments_count')
+                    ->counts('enrollments')
+                    ->label('Enrolled')
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('available_seats')
+                    ->label('Available')
+                    ->state(function (Bootcamp $record): int {
+                        return max(0, $record->seats - $record->enrollments_count);
+                    })
+                    ->badge()
+                    ->color(fn (int $state): string => match (true) {
+                        $state === 0 => 'danger',
+                        $state <= 5 => 'warning',
+                        default => 'success',
+                    })
+                    ->sortable(query: function (Builder $query, string $direction): Builder {
+                        return $query
+                            ->withCount('enrollments')
+                            ->orderByRaw("(seats - enrollments_count) {$direction}");
+                    }),
 
                 Tables\Columns\IconColumn::make('certificate')
                     ->boolean()
@@ -174,12 +200,6 @@ class BootcampResource extends Resource
 
                 Tables\Columns\TextColumn::make('start_date')
                     ->date('M d, Y')
-                    ->sortable()
-                    ->toggleable(),
-
-                Tables\Columns\TextColumn::make('enrollments_count')
-                    ->counts('enrollments')
-                    ->label('Enrollments')
                     ->sortable()
                     ->toggleable(),
 
@@ -245,6 +265,20 @@ class BootcampResource extends Resource
                     ->searchable()
                     ->preload(),
 
+                Tables\Filters\Filter::make('seats_available')
+                    ->label('Has Available Seats')
+                    ->query(fn (Builder $query): Builder => 
+                        $query->withCount('enrollments')
+                              ->whereRaw('seats > enrollments_count')
+                    ),
+
+                Tables\Filters\Filter::make('fully_booked')
+                    ->label('Fully Booked')
+                    ->query(fn (Builder $query): Builder => 
+                        $query->withCount('enrollments')
+                              ->whereRaw('seats <= enrollments_count')
+                    ),
+
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
@@ -307,7 +341,28 @@ class BootcampResource extends Resource
                             ->suffix(' weeks'),
 
                         Infolists\Components\TextEntry::make('seats')
-                            ->label('Available Seats'),
+                            ->label('Total Seats'),
+
+                        Infolists\Components\TextEntry::make('enrollments_count')
+                            ->label('Enrolled Students')
+                            ->state(fn (Bootcamp $record): int => $record->enrollments()->count()),
+
+                        Infolists\Components\TextEntry::make('available_seats')
+                            ->label('Available Seats')
+                            ->state(function (Bootcamp $record): int {
+                                $enrolled = $record->enrollments()->count();
+                                return max(0, $record->seats - $enrolled);
+                            })
+                            ->badge()
+                            ->color(function (Bootcamp $record): string {
+                                $enrolled = $record->enrollments()->count();
+                                $available = max(0, $record->seats - $enrolled);
+                                return match (true) {
+                                    $available === 0 => 'danger',
+                                    $available <= 5 => 'warning',
+                                    default => 'success',
+                                };
+                            }),
 
                         Infolists\Components\TextEntry::make('start_date')
                             ->date('F d, Y'),
@@ -315,10 +370,6 @@ class BootcampResource extends Resource
                         Infolists\Components\IconEntry::make('certificate')
                             ->label('Certificate Offered')
                             ->boolean(),
-
-                        Infolists\Components\TextEntry::make('enrollments_count')
-                            ->label('Total Enrollments')
-                            ->state(fn (Bootcamp $record): int => $record->enrollments()->count()),
                     ])
                     ->columns(2),
 
@@ -361,7 +412,8 @@ class BootcampResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->withCount('enrollments');
     }
 
     public static function getNavigationBadge(): ?string

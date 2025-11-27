@@ -53,8 +53,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
 use App\Http\Controllers\Api\BootcampController\BootcampController;
 
-Route::get('bootcamps', [BootcampController::class, 'basicList']);
-Route::get('bootcamps/{id}', [BootcampController::class, 'details']);
+Route::get('bootcamps', [BootcampController::class, 'index']);
+Route::get('bootcamps/{id}', [BootcampController::class, 'show']);
 
 use App\Http\Controllers\Api\CourseController\CourseController;
 
@@ -160,3 +160,10 @@ use App\Http\Controllers\Api\CommonQuestionController\CommonQuestionController;
 
 Route::get('/common-questions', [CommonQuestionController::class, 'index']);
 Route::get('/common-questions/{id}', [CommonQuestionController::class, 'show']);
+
+
+use App\Http\Controllers\Api\TestimonialController\TestimonialController;
+
+Route::get('/testimonials', [TestimonialController::class, 'index']);
+Route::get('/testimonials/{id}', [TestimonialController::class, 'show']);
+Route::post('/testimonials', [TestimonialController::class, 'store']);
