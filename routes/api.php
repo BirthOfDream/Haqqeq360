@@ -155,3 +155,8 @@ use App\Http\Controllers\Api\DigitalProductController\DigitalProductController;
 Route::get('/digital-products', [DigitalProductController::class, 'index']);
 Route::get('/digital-products/{id}', [DigitalProductController::class, 'show']);
 Route::get('/digital-products/search/{keyword}', [DigitalProductController::class, 'search']); // ⭐ New Search Route
+
+use App\Http\Controllers\Api\CommonQuestionController\CommonQuestionController;
+
+Route::get('/common-questions', [CommonQuestionController::class, 'index']);
+Route::get('/common-questions/{id}', [CommonQuestionController::class, 'show']);
