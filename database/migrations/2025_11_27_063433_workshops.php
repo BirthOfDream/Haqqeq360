@@ -23,6 +23,7 @@ return new class extends Migration
             $table->enum('level', ['beginner', 'intermediate', 'advanced'])->default('beginner');
             $table->enum('mode', ['online', 'hybrid', 'offline'])->default('online');
             $table->string('cover_image')->nullable();
+            $table->integer('seats')->nullable();
             $table->enum('status', ['draft', 'published'])->default('draft');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
