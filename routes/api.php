@@ -56,6 +56,13 @@ use App\Http\Controllers\Api\BootcampController\BootcampController;
 Route::get('bootcamps', [BootcampController::class, 'index']);
 Route::get('bootcamps/{id}', [BootcampController::class, 'show']);
 
+use App\Http\Controllers\Api\EnrollmentController\EnrollmentController;
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('enrollments', [EnrollmentController::class, 'store']);
+    Route::get('enrollments', [EnrollmentController::class, 'index']);
+    Route::get('enrollments/{id}', [EnrollmentController::class, 'show']);
+});
+
 use App\Http\Controllers\Api\CourseController\CourseController;
 
 Route::prefix('courses')->group(function () {

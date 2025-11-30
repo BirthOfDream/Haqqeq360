@@ -29,4 +29,8 @@ class Workshop extends Model
    {
        return $this->belongsTo(User::class, 'user_id');
    }
+       public function enrollments()
+    {
+        return $this->morphMany(Enrollment::class, 'enrollable');
+    }
 }

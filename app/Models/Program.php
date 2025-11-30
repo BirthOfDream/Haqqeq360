@@ -45,4 +45,8 @@ class Program extends Model
     public function creator() {
         return $this->belongsTo(User::class, 'created_by');
     }
+        public function enrollments()
+    {
+        return $this->morphMany(Enrollment::class, 'enrollable');
+    }
 }

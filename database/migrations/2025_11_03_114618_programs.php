@@ -10,7 +10,6 @@ return new class extends Migration
     {
         Schema::create('programs', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['course', 'bootcamp']);
             $table->string('title_ar');
             $table->string('title_en')->nullable();
             $table->string('slug')->unique();

@@ -5,14 +5,31 @@ namespace App\Actions\Enrollments;
 use App\Models\Enrollment;
 use App\Models\Course;
 use App\Models\Bootcamp;
+use App\Models\Workshop;
+use App\Models\Program;
 use Illuminate\Support\Facades\DB;
 
 class CreateEnrollmentAction
 {
     public function execute(int $userId, string $enrollableType, int $enrollableId)
     {
-        // Determine the model based on type
-        $model = $enrollableType === 'course' ? Course::class : Bootcamp::class;
+        // Map enrollable type to model class
+        $modelMap = [
+            'course' => Course::class,
+            'bootcamp' => Bootcamp::class,
+            'workshop' => Workshop::class,
+            'program' => Program::class,
+        ];
+
+        if (!isset($modelMap[$enrollableType])) {
+            return [
+                'success' => false,
+                'message' => 'Invalid enrollable type. Must be: course, bootcamp, workshop, or program',
+                'code' => 'INVALID_TYPE'
+            ];
+        }
+
+        $model = $modelMap[$enrollableType];
         
         // Find the enrollable item
         $enrollable = $model::withCount('enrollments')->find($enrollableId);
@@ -77,7 +94,6 @@ class CreateEnrollmentAction
                 'user_id' => $userId,
                 'enrollable_type' => $model,
                 'enrollable_id' => $enrollableId,
-                'enrolled_at' => now(),
                 'status' => 'active'
             ]);
 

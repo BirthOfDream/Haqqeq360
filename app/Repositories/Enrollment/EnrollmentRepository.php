@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Repositories;
+namespace App\Repositories\Enrollment;
 
 use App\Models\Enrollment;
-use App\Repositories\Contracts\EnrollmentRepositoryInterface;
+use App\Repositories\Interfaces\EnrollmentRepositoryInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class EnrollmentRepository implements EnrollmentRepositoryInterface

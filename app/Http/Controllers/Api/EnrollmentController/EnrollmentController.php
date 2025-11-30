@@ -16,16 +16,13 @@ use App\Actions\Enrollments\{
     ShowEnrollmentAction
 };
 
-use App\Repositories\Contracts\EnrollmentRepositoryInterface;
+use App\Models\Enrollment;
 
 class EnrollmentController extends Controller
 {
-    protected $repo;
-
-    public function __construct(EnrollmentRepositoryInterface $repo)
+    public function __construct()
     {
-        $this->middleware('auth:sanctum');
-        $this->repo = $repo;
+        // Middleware will be applied in routes file
     }
 
     protected function success($data, $message = 'Success', $code = 200)
@@ -41,8 +38,10 @@ class EnrollmentController extends Controller
     public function index()
     {
         try {
-            $data = $this->repo->getAll();
-            return $this->success($data, 'Enrollments retrieved successfully');
+            $enrollments = Enrollment::with(['user', 'enrollable'])
+                ->where('user_id', Auth::id())
+                ->get();
+            return $this->success($enrollments, 'Enrollments retrieved successfully');
         } catch (Exception $e) {
             return $this->error($e->getMessage(), 500);
         }
@@ -63,8 +62,42 @@ class EnrollmentController extends Controller
     public function store(Request $request, CreateEnrollmentAction $action)
     {
         try {
-            $enrollment = $action->execute($request->all());
-            return $this->success($enrollment, 'Enrollment created successfully', 201);
+            // Validate request
+            $validated = $request->validate([
+                'enrollable_type' => 'required|string|in:course,bootcamp,workshop,program',
+                'enrollable_id' => 'required|integer|min:1'
+            ]);
+
+            // Get authenticated user
+            $userId = Auth::id();
+
+            // Execute enrollment action
+            $result = $action->execute(
+                $userId,
+                $validated['enrollable_type'],
+                $validated['enrollable_id']
+            );
+
+            // Return appropriate response based on result
+            if ($result['success']) {
+                return $this->success($result['data'], $result['message'], 201);
+            } else {
+                $statusCode = match($result['code']) {
+                    'NOT_FOUND' => 404,
+                    'FULLY_BOOKED' => 409,
+                    'ALREADY_ENROLLED' => 409,
+                    'INVALID_TYPE' => 422,
+                    default => 400
+                };
+                
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $result['message'],
+                    'code' => $result['code'],
+                    'data' => $result['data'] ?? null
+                ], $statusCode);
+            }
+
         } catch (ValidationException $e) {
             return $this->error($e->errors(), 422);
         } catch (Exception $e) {
@@ -75,7 +108,13 @@ class EnrollmentController extends Controller
     public function update($id, Request $request, UpdateEnrollmentAction $action)
     {
         try {
-            $enrollment = $this->repo->findById($id);
+            $enrollment = Enrollment::findOrFail($id);
+            
+            // Check if user owns this enrollment
+            if ($enrollment->user_id !== Auth::id()) {
+                return $this->error('Unauthorized', 403);
+            }
+            
             $updated = $action->execute($enrollment, $request->all());
             return $this->success($updated, 'Enrollment updated successfully');
         } catch (ModelNotFoundException $e) {
@@ -90,7 +129,13 @@ class EnrollmentController extends Controller
     public function destroy($id, DeleteEnrollmentAction $action)
     {
         try {
-            $enrollment = $this->repo->findById($id);
+            $enrollment = Enrollment::findOrFail($id);
+            
+            // Check if user owns this enrollment
+            if ($enrollment->user_id !== Auth::id()) {
+                return $this->error('Unauthorized', 403);
+            }
+            
             $action->execute($enrollment);
             return $this->success(null, 'Enrollment deleted successfully');
         } catch (ModelNotFoundException $e) {
