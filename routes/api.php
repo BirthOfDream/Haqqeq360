@@ -232,3 +232,31 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/', [TestAttemptController::class, 'myAttempts']); // Get all user's attempts
     });
 });
+
+use App\Http\Controllers\Api\EvaluationController\EvaluationController;
+
+use App\Http\Controllers\Api\EvaluationController\EvaluationResponseController;
+
+Route::prefix('admin')->group(function () {
+    
+    // Evaluation Management
+    Route::prefix('evaluations')->group(function () {
+        Route::get('/products', [EvaluationController::class, 'getProducts']);
+        Route::get('/standard-questions', [EvaluationController::class, 'getStandardQuestions']);
+        Route::post('/', [EvaluationController::class, 'store']);
+        Route::get('/by-product', [EvaluationController::class, 'getByProduct']);
+        Route::put('/{evaluation}', [EvaluationController::class, 'update']);
+        Route::delete('/{evaluation}', [EvaluationController::class, 'destroy']);
+        Route::get('/{evaluation}/results', [EvaluationResponseController::class, 'getResults']);
+    });
+});
+
+// Student Routes - Protected by auth middleware
+Route::middleware(['auth:sanctum'])->prefix('student')->group(function () {
+    
+    // Student Evaluation Access
+    Route::prefix('evaluations')->group(function () {
+        Route::get('/available', [EvaluationResponseController::class, 'getAvailableEvaluations']);
+        Route::post('/{evaluation}/submit', [EvaluationResponseController::class, 'submit']);
+    });
+});

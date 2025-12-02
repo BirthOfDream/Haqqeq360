@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
         CourseSeeder::class,      // Uses instructor_id
         BootcampSeeder::class,    // Uses instructor_id
         ProgramsSeeder::class,    // Uses category_id
+        EvaluationSeeder::class
     ]);
        User::factory()->create([
     'first_name' => 'Test',
