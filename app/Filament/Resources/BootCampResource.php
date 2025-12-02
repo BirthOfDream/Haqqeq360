@@ -21,7 +21,7 @@ class BootCampResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
 
-    protected static ?string $navigationGroup = 'Training';
+    protected static ?string $navigationGroup = 'إدارة المنتجات';
 
     protected static ?int $navigationSort = 1;
 

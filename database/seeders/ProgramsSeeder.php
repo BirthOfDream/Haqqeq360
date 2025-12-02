@@ -32,7 +32,6 @@ class ProgramsSeeder extends Seeder
 
         $programs = [
             [
-                'type' => 'course',
                 'title_ar' => 'مقدمة في البرمجة',
                 'title_en' => 'Introduction to Programming',
                 'slug' => 'intro-to-programming',
@@ -56,7 +55,6 @@ class ProgramsSeeder extends Seeder
                 'published_at' => $now,
             ],
             [
-                'type' => 'bootcamp',
                 'title_ar' => 'بوتكامب تطوير الويب',
                 'title_en' => 'Web Development Bootcamp',
                 'slug' => 'web-dev-bootcamp',
@@ -80,7 +78,6 @@ class ProgramsSeeder extends Seeder
                 'published_at' => $now,
             ],
             [
-                'type' => 'course',
                 'title_ar' => 'دورة قواعد البيانات',
                 'title_en' => 'Database Course',
                 'slug' => 'database-course',

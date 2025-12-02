@@ -16,7 +16,7 @@ class CommonQuestionsResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-question-mark-circle';
 
-    protected static ?string $navigationGroup = 'Content Management';
+    protected static ?string $navigationGroup = 'إدارة صفحات الموقع';
 
     public static function form(Form $form): Form
     {

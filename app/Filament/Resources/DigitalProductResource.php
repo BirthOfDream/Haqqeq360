@@ -15,7 +15,7 @@ class DigitalProductResource extends Resource
 {
     protected static ?string $model = DigitalProduct::class;
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
-    protected static ?string $navigationGroup = 'Store Management';
+    protected static ?string $navigationGroup = 'إدارة المنتجات';
 
     public static function form(Form $form): Form
     {
