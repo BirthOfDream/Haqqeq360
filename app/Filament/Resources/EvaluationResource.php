@@ -18,7 +18,9 @@ class EvaluationResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     
     protected static ?string $navigationLabel = 'التقييمات';
-    
+
+     protected static ?string $navigationGroup = 'إدارة التقييمات';
+
     protected static ?string $modelLabel = 'تقييم';
     
     protected static ?string $pluralModelLabel = 'التقييمات';

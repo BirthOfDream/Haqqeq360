@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use \Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 
 class Bootcamp extends Model {
@@ -17,4 +18,8 @@ class Bootcamp extends Model {
     public function assignments() {
     return $this->hasMany(Assignment::class);
 }
+    public function plans(): MorphMany
+    {
+        return $this->morphMany(Plan::class, 'planable');
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Workshop extends Model
 {
@@ -32,5 +33,9 @@ class Workshop extends Model
        public function enrollments()
     {
         return $this->morphMany(Enrollment::class, 'enrollable');
+    } 
+     public function plans(): MorphMany
+    {
+        return $this->morphMany(Plan::class, 'planable');
     }
 }

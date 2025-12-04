@@ -378,3 +378,61 @@ Route::prefix('learner')->group(function () {
         });
     });
 });
+
+use App\Http\Controllers\Api\DiscussionThreadController;
+use App\Http\Controllers\Api\DiscussionReplyController;
+use App\Http\Controllers\Api\DiscussionNotificationController;
+
+// Route::middleware(['auth:sanctum'])->prefix('learner')->group(function () {
+    
+//     // Discussion Threads
+//     Route::get('courses/{course}/discussions', [DiscussionThreadController::class, 'index']);
+//     Route::get('discussions/{thread}', [DiscussionThreadController::class, 'show']);
+    
+//     // Discussion Replies
+//     Route::post('discussions/{thread}/replies', [DiscussionReplyController::class, 'store']);
+//     Route::put('replies/{reply}', [DiscussionReplyController::class, 'update']);
+//     Route::delete('replies/{reply}', [DiscussionReplyController::class, 'destroy']);
+//     Route::post('replies/{reply}/like', [DiscussionReplyController::class, 'toggleLike']);
+    
+//     // Discussion Notifications
+//     Route::get('discussion-notifications', [DiscussionNotificationController::class, 'index']);
+//     Route::get('discussion-notifications/unread', [DiscussionNotificationController::class, 'unread']);
+//     Route::put('discussion-notifications/{notification}/read', [DiscussionNotificationController::class, 'markAsRead']);
+//     Route::put('discussion-notifications/read-all', [DiscussionNotificationController::class, 'markAllAsRead']);
+// });
+
+use App\Http\Controllers\Api\LinkTreeController\LinkTreeController;
+
+Route::prefix('link-tree')->group(function () {
+    // Public endpoints
+    Route::get('/{slug?}', [LinkTreeController::class, 'show']);
+    Route::post('/track/{linkId}', [LinkTreeController::class, 'trackClick']);
+    
+    // Protected endpoint for analytics
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/analytics', [LinkTreeController::class, 'analytics']);
+    });
+});
+
+use App\Http\Controllers\Api\PlanController\PlanController;
+use App\Http\Controllers\Api\SubscriptionController\SubscriptionController;
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Plans
+    Route::get('/plans', [PlanController::class, 'index']);
+    Route::get('/plans/{plan}', [PlanController::class, 'show']);
+    Route::get('/plans/type/{type}', [PlanController::class, 'byType']);
+    
+    // Subscriptions
+    Route::post('/subscriptions', [SubscriptionController::class, 'store']);
+    Route::get('/subscriptions', [SubscriptionController::class, 'index']);
+    Route::get('/subscriptions/{subscription}', [SubscriptionController::class, 'show']);
+});
+use App\Http\Controllers\Api\BankAccountController\BankAccountController;
+
+Route::prefix('bank-accounts')->group(function () {
+    Route::get('/', [BankAccountController::class, 'index']);
+    Route::get('/{bankAccount}', [BankAccountController::class, 'show']);
+    Route::get('/search/by-bank', [BankAccountController::class, 'getByBank']);
+});
