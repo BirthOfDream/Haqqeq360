@@ -3,10 +3,35 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Assignment extends Model {
-    protected $fillable = ['title','description','due_date','course_id'];
-    public function course() { return $this->belongsTo(Course::class); }
-    public function submissions() { return $this->hasMany(Submission::class); }
+class Assignment extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'title',
+        'description',
+        'due_date',
+        'lesson_id',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    // Assignment belongs to a lesson
+    public function lesson()
+    {
+        return $this->belongsTo(Lesson::class);
+    }
+
+    // Assignment has many submissions
+    public function submissions()
+    {
+        return $this->hasMany(Submission::class);
+    }
 }
-

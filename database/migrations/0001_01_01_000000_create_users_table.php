@@ -18,6 +18,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('phone')->nullable();
             $table->string('password');
+            $table->string('district')->nullable();
+            $table->string('city')->nullable();
+            $table->string('country')->nullable();
+            $table->string('organization_id')->nullable();
             $table->enum('role', ['learner', 'instructor', 'admin','supervisior','manger'])->default('learner');
             $table->text('bio')->nullable();
             $table->string('api_token', 80)->unique()->nullable()->default(null);

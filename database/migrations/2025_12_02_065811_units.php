@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('units', function (Blueprint $table) {
+Schema::create('units', function (Blueprint $table) {
     $table->id();
-    $table->foreignId('course_id')->constrained()->onDelete('cascade');
     $table->string('title');
-    
-    $table->text('description')->nullable();
     $table->integer('order')->default(0);
+
+    // Polymorphic: course, bootcamp, workshop
+    $table->morphs('unitable');  // unitable_id + unitable_type
+
     $table->timestamps();
+    $table->softDeletes();
 });
     }
 

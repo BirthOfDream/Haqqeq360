@@ -2,52 +2,79 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Model;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class User extends Authenticatable  {
-    use HasApiTokens, HasFactory, Notifiable, HasRoles,SoftDeletes;
+class User extends Authenticatable
+{
+    use HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes;
 
-protected $fillable = [
-    'first_name',
-    'second_name', 
-    'email',
-    'phone',
-    'password',
-    'role',
-    'bio',
-    'avatar',
-    'email_verified_at', // Add if you want it mass-assignable
-    'api_token' ,
-    'is_active'// Add if you want it mass-assignable
-];
-    public function enrollments() { return $this->hasMany(Enrollment::class); }
-    public function courses() { return $this->hasMany(Course::class, 'instructor_id'); }
-    public function bootcamps() { return $this->hasMany(Bootcamp::class, 'instructor_id'); }
+    protected $fillable = [
+        'name',
+        'first_name',
+        'second_name',
+        'email',
+        'phone',
+        'password',
+        'district',
+        'city',
+        'country',
+        'organization_id',
+        'role',
+        'bio',
+        'avatar',
+        'api_token',
+        'is_active',
+        'email_verified_at'
+    ];
 
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
+        'remember_token',
+        'api_token',
     ];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
         'is_active' => 'boolean',
-
     ];
-// In App\Models\User.php
-public function getNameAttribute(): string
-{
-    return trim($this->first_name . ' ' . $this->second_name);
-}
 
-   public function userNotifications() // instead of notifications()
-   {
-       return $this->hasMany(Notification::class, 'user_id');
-   }
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    public function courses()
+    {
+        return $this->hasMany(Course::class, 'instructor_id');
+    }
+
+    public function bootcamps()
+    {
+        return $this->hasMany(Bootcamp::class, 'instructor_id');
+    }
+
+    public function userNotifications()
+    {
+        return $this->hasMany(Notification::class, 'user_id');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Accessors
+    |--------------------------------------------------------------------------
+    */
+    public function getNameAttribute(): string
+    {
+        return trim(($this->first_name ?? '') . ' ' . ($this->second_name ?? ''));
+    }
 }

@@ -22,4 +22,8 @@ class Bootcamp extends Model {
     {
         return $this->morphMany(Plan::class, 'planable');
     }
+    public function units()
+{
+    return $this->morphMany(Unit::class, 'unitable')->orderBy('order');
+}
 }

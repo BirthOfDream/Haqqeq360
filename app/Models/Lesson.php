@@ -21,4 +21,10 @@ class Lesson extends Model
     {
         return $this->belongsTo(Unit::class);
     }
+
+    // Lesson has many assignments
+    public function assignments()
+    {
+        return $this->hasMany(Assignment::class);
+    }
 }
