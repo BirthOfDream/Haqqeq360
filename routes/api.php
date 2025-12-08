@@ -429,3 +429,16 @@ use App\Http\Controllers\Api\SearchController\SearchController;
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/search', [SearchController::class, 'search']);
 });
+
+use App\Http\Controllers\Api\DiscussionController\DiscussionController;
+
+Route::middleware(['auth:sanctum'])->group(function () {
+    // Discussion routes
+    Route::prefix('discussions')->group(function () {
+        Route::get('/', [DiscussionController::class, 'index']);
+        Route::get('/{id}', [DiscussionController::class, 'show']);
+        Route::post('/{id}/comment', [DiscussionController::class, 'comment']);
+        Route::post('/{id}/like', [DiscussionController::class, 'likeDiscussion']);
+        Route::post('/comments/{commentId}/like', [DiscussionController::class, 'likeComment']);
+    });
+});

@@ -75,6 +75,7 @@ class ProfileController extends Controller
                 'email' => $user->email,
                 'phone' => $user->phone,
                 'district' => $user->district,
+                'role' => $user->role,
                 'city' => $user->city,
                 'country' => $user->country,
                 'created_at' => $user->created_at,
