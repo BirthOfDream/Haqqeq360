@@ -43,6 +43,8 @@ Route::middleware('auth:sanctum')->prefix('me')->group(function () {
     Route::get('/', [\App\Http\Controllers\Api\UserController\ProfileController::class, 'show']);
     Route::patch('/', [\App\Http\Controllers\Api\UserController\ProfileController::class, 'update']); // PATCH for partial updates
     Route::delete('/', [\App\Http\Controllers\Api\UserController\ProfileController::class, 'destroy']);
+    Route::post('/', [\App\Http\Controllers\Api\UserController\ProfileController::class, 'update']); // PATCH for partial updates
+
 });
 
 use App\Http\Controllers\Api\NotificationController\NotificationController;
@@ -439,4 +441,9 @@ Route::prefix('bank-accounts')->group(function () {
     Route::get('/', [BankAccountController::class, 'index']);
     Route::get('/{bankAccount}', [BankAccountController::class, 'show']);
     Route::get('/search/by-bank', [BankAccountController::class, 'getByBank']);
+});
+
+use App\Http\Controllers\Api\SearchController\SearchController;
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/search', [SearchController::class, 'search']);
 });
