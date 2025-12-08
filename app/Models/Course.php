@@ -15,11 +15,11 @@ class Course extends Model {
 
     protected $fillable = [
         'title','slug','description','duration_weeks','level',
-        'seats','mode','cover_image','status','instructor_id'
+        'seats','mode','cover_image','status','user_id'
     ];
 
-    public function instructor() {
-        return $this->belongsTo(User::class, 'instructor_id');
+    public function user() {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function enrollments() {
@@ -27,7 +27,7 @@ class Course extends Model {
     }
 
     public function publishRequests() {
-        return $this->hasMany(CoursePublishRequest::class);
+        return $this->hasMany(CoursePublishRequest::class, 'course_id');
     }
 
     public function plans(): MorphMany {
@@ -37,7 +37,11 @@ class Course extends Model {
     public function units() {
         return $this->morphMany(Unit::class, 'unitable')->orderBy('order');
     }
-
+    public function lessons()
+{
+    // كل الكورسات عندها دروس عن طريق الوحدات
+    return $this->hasManyThrough(Lesson::class, Unit::class);
+}
     // The correct assignment relation
     public function assignments()
     {

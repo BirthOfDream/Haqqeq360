@@ -42,9 +42,10 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::middleware('auth:sanctum')->prefix('me')->group(function () {
     Route::get('/', [\App\Http\Controllers\Api\UserController\ProfileController::class, 'show']);
     Route::patch('/', [\App\Http\Controllers\Api\UserController\ProfileController::class, 'update']); // PATCH for partial updates
-    Route::delete('/', [\App\Http\Controllers\Api\UserController\ProfileController::class, 'destroy']);
-    Route::post('/', [\App\Http\Controllers\Api\UserController\ProfileController::class, 'update']); // PATCH for partial updates
+        Route::post('/', [\App\Http\Controllers\Api\UserController\ProfileController::class, 'update']); // PATCH for partial updates
+    Route::post('/avatar', [\App\Http\Controllers\Api\UserController\ProfileController::class,  'updateAvatar']);
 
+    Route::delete('/', [\App\Http\Controllers\Api\UserController\ProfileController::class, 'destroy']);
 });
 
 use App\Http\Controllers\Api\NotificationController\NotificationController;
@@ -385,28 +386,9 @@ Route::prefix('learner')->group(function () {
     });
 });
 
-use App\Http\Controllers\Api\DiscussionThreadController;
-use App\Http\Controllers\Api\DiscussionReplyController;
-use App\Http\Controllers\Api\DiscussionNotificationController;
 
-// Route::middleware(['auth:sanctum'])->prefix('learner')->group(function () {
-    
-//     // Discussion Threads
-//     Route::get('courses/{course}/discussions', [DiscussionThreadController::class, 'index']);
-//     Route::get('discussions/{thread}', [DiscussionThreadController::class, 'show']);
-    
-//     // Discussion Replies
-//     Route::post('discussions/{thread}/replies', [DiscussionReplyController::class, 'store']);
-//     Route::put('replies/{reply}', [DiscussionReplyController::class, 'update']);
-//     Route::delete('replies/{reply}', [DiscussionReplyController::class, 'destroy']);
-//     Route::post('replies/{reply}/like', [DiscussionReplyController::class, 'toggleLike']);
-    
-//     // Discussion Notifications
-//     Route::get('discussion-notifications', [DiscussionNotificationController::class, 'index']);
-//     Route::get('discussion-notifications/unread', [DiscussionNotificationController::class, 'unread']);
-//     Route::put('discussion-notifications/{notification}/read', [DiscussionNotificationController::class, 'markAsRead']);
-//     Route::put('discussion-notifications/read-all', [DiscussionNotificationController::class, 'markAllAsRead']);
-// });
+
+
 
 use App\Http\Controllers\Api\LinkTreeController\LinkTreeController;
 

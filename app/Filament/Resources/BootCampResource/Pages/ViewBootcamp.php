@@ -83,8 +83,7 @@ class ViewBootCamp extends ViewRecord
                             ->label('Start Date')
                             ->date('F d, Y')
                             ->icon('heroicon-o-calendar')
-                            ->color(fn ($state) => $state && $state->isFuture() ? 'success' : 'gray'),
-
+                             ->color(fn($state) => $state && \Carbon\Carbon::parse($state)->isFuture() ? 'success' : 'gray'),
                         Components\IconEntry::make('certificate')
                             ->label('Certificate Offered')
                             ->boolean()

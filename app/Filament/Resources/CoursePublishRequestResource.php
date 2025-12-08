@@ -34,7 +34,7 @@ class CoursePublishRequestResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('course_id')
                             ->label('الدورة')
-                            ->relationship('course', 'name')
+                            ->relationship('course', 'title')
                             ->required()
                             ->searchable()
                             ->preload()
@@ -113,7 +113,7 @@ class CoursePublishRequestResource extends Resource
                     ->sortable()
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('course.name')
+                Tables\Columns\TextColumn::make('course.title')
                     ->label('اسم الدورة')
                     ->searchable()
                     ->sortable()
@@ -206,7 +206,7 @@ class CoursePublishRequestResource extends Resource
 
                 Tables\Filters\SelectFilter::make('course_id')
                     ->label('الدورة')
-                    ->relationship('course', 'name')
+                    ->relationship('course', 'title')
                     ->searchable()
                     ->preload()
                     ->multiple(),

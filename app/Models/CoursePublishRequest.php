@@ -21,8 +21,8 @@ class CoursePublishRequest extends Model
         return $this->belongsTo(Course::class);
     }
 
-    public function trainer()
+    public function user()
     {
-        return $this->belongsTo(User::class, 'trainer_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

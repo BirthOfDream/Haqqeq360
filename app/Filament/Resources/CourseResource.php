@@ -198,21 +198,17 @@ class CourseResource extends Resource
                     ->toggleable(),
                 
                 Tables\Columns\TextColumn::make('available_seats')
-                    ->label('Available')
-                    ->state(function (Course $record): int {
-                        return max(0, $record->seats - $record->enrollments_count);
-                    })
-                    ->badge()
-                    ->color(fn (int $state): string => match (true) {
-                        $state === 0 => 'danger',
-                        $state <= 5 => 'warning',
-                        default => 'success',
-                    })
-                    ->sortable(query: function (Builder $query, string $direction): Builder {
-                        return $query
-                            ->withCount('enrollments')
-                            ->orderByRaw("(seats - enrollments_count) {$direction}");
-                    }),
+    ->label('Available')
+    ->state(function (Course $record): int {
+        return max(0, $record->seats - $record->enrollments_count);
+    })
+    ->badge()
+    ->color(fn (int $state): string => match (true) {
+        $state === 0 => 'danger',
+        $state <= 5 => 'warning',
+        default => 'success',
+    })
+    ->sortable(),
                 
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([

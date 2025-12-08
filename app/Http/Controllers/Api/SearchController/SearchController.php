@@ -10,6 +10,7 @@ use App\Models\Course;
 use App\Models\Workshop;
 use App\Models\Assignment;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class SearchController extends Controller
 {
@@ -166,40 +167,39 @@ class SearchController extends Controller
                 $results['workshops'] = $workshops;
             }
 
-            // Search Assignments (only for enrolled users)
+            // Search Assignments - SIMPLIFIED VERSION
+            // Only search by title/description, don't filter by enrollment
             if ($type === 'all' || $type === 'assignments') {
-                $assignments = Assignment::query()
-                    ->where(function ($q) use ($query) {
-                        if (!empty($query)) {
-                            $q->where('title', 'LIKE', "%{$query}%")
-                              ->orWhere('description', 'LIKE', "%{$query}%");
-                        }
-                    })
-                    ->whereHas('lesson.course.enrollments', function ($q) use ($user) {
-                        $q->where('user_id', $user->id);
-                    })
-                    ->with(['lesson:id,title,course_id', 'lesson.course:id,title'])
-                    ->get()
-                    ->map(function ($assignment) {
-                        return [
-                            'id' => $assignment->id,
-                            'type' => 'assignment',
-                            'title' => $assignment->title,
-                            'description' => $assignment->description,
-                            'due_date' => $assignment->due_date,
-                            'lesson' => [
-                                'id' => $assignment->lesson->id,
-                                'title' => $assignment->lesson->title,
-                            ],
-                            'course' => [
-                                'id' => $assignment->lesson->course->id,
-                                'title' => $assignment->lesson->course->title,
-                            ],
-                            'created_at' => $assignment->created_at,
-                        ];
-                    });
+                try {
+                    $assignments = Assignment::query()
+                        ->where(function ($q) use ($query) {
+                            if (!empty($query)) {
+                                $q->where('title', 'LIKE', "%{$query}%")
+                                  ->orWhere('description', 'LIKE', "%{$query}%");
+                            }
+                        })
+                        ->with('lesson:id,title')
+                        ->get()
+                        ->map(function ($assignment) {
+                            return [
+                                'id' => $assignment->id,
+                                'type' => 'assignment',
+                                'title' => $assignment->title,
+                                'description' => $assignment->description,
+                                'due_date' => $assignment->due_date,
+                                'lesson' => $assignment->lesson ? [
+                                    'id' => $assignment->lesson->id,
+                                    'title' => $assignment->lesson->title,
+                                ] : null,
+                                'created_at' => $assignment->created_at,
+                            ];
+                        });
 
-                $results['assignments'] = $assignments;
+                    $results['assignments'] = $assignments;
+                } catch (\Exception $e) {
+                    Log::warning('Assignment search failed: ' . $e->getMessage());
+                    $results['assignments'] = collect([]);
+                }
             }
 
             // Calculate total results

@@ -27,4 +27,9 @@ class Lesson extends Model
     {
         return $this->hasMany(Assignment::class);
     }
+ public function course()
+{
+    return $this->belongsTo(\App\Models\Course::class);
 }
+}
+

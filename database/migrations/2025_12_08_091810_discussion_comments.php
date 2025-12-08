@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-                Schema::create('discussion_likes', function (Blueprint $table) {
+                Schema::create('discussion_comments', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('discussion_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->morphs('likeable'); // discussion_threads أو discussion_replies
+            $table->foreignId('parent_id')->nullable()->constrained('discussion_comments')->cascadeOnDelete();
+            $table->text('content');
             $table->timestamps();
-
-            $table->unique(['user_id', 'likeable_type', 'likeable_id']);
+            $table->softDeletes();
         });
     }
 
