@@ -45,6 +45,7 @@ class CourseResource extends Resource
                             ->helperText('URL-friendly version of the title'),
                         
                         Forms\Components\Select::make('instructor_id')
+                            ->label('Instructor')
                             ->relationship('instructor', 'name', function ($query) {
                                 return $query->whereIn('role', ['instructor', 'admin']);
                             })
@@ -84,6 +85,22 @@ class CourseResource extends Resource
                             ->directory('course-covers')
                             ->visibility('public')
                             ->columnSpanFull(),
+                        
+                        Forms\Components\TextInput::make('price')
+                            ->numeric()
+                            ->prefix('$')
+                            ->minValue(0)
+                            ->step(0.01)
+                            ->default(0)
+                            ->required(),
+                        
+                        Forms\Components\TextInput::make('discounted_price')
+                            ->numeric()
+                            ->prefix('$')
+                            ->minValue(0)
+                            ->step(0.01)
+                            ->helperText('Leave empty if no discount')
+                            ->lte('price'),
                     ])
                     ->columns(2),
 
@@ -140,6 +157,7 @@ class CourseResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->withCount('enrollments'))
             ->columns([
                 Tables\Columns\ImageColumn::make('cover_image')
                     ->defaultImageUrl(fn ($record) => 'https://ui-avatars.com/api/?name=' . urlencode($record->title) . '&color=7F9CF5&background=EBF4FF&size=128'),
@@ -153,6 +171,17 @@ class CourseResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
+                
+                Tables\Columns\TextColumn::make('price')
+                    ->money('USD')
+                    ->sortable()
+                    ->toggleable(),
+                
+                Tables\Columns\TextColumn::make('discounted_price')
+                    ->money('USD')
+                    ->sortable()
+                    ->toggleable()
+                    ->placeholder('—'),
                 
                 Tables\Columns\BadgeColumn::make('level')
                     ->colors([
@@ -192,23 +221,22 @@ class CourseResource extends Resource
                     ->toggleable(),
                 
                 Tables\Columns\TextColumn::make('enrollments_count')
-                    ->counts('enrollments')
                     ->label('Enrolled')
                     ->sortable()
                     ->toggleable(),
                 
                 Tables\Columns\TextColumn::make('available_seats')
-    ->label('Available')
-    ->state(function (Course $record): int {
-        return max(0, $record->seats - $record->enrollments_count);
-    })
-    ->badge()
-    ->color(fn (int $state): string => match (true) {
-        $state === 0 => 'danger',
-        $state <= 5 => 'warning',
-        default => 'success',
-    })
-    ->sortable(),
+                    ->label('Available')
+                    ->state(function (Course $record): int {
+                        return max(0, $record->seats - $record->enrollments_count);
+                    })
+                    ->badge()
+                    ->color(fn (int $state): string => match (true) {
+                        $state === 0 => 'danger',
+                        $state <= 5 => 'warning',
+                        default => 'success',
+                    })
+                    ->sortable(),
                 
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([
@@ -220,12 +248,6 @@ class CourseResource extends Resource
                         'heroicon-o-check-circle' => 'published',
                     ])
                     ->sortable(),
-                
-                Tables\Columns\TextColumn::make('assignments_count')
-                    ->counts('assignments')
-                    ->label('Assignments')
-                    ->sortable()
-                    ->toggleable(),
                 
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -276,14 +298,14 @@ class CourseResource extends Resource
                     ->label('Has Available Seats')
                     ->query(fn (Builder $query): Builder => 
                         $query->withCount('enrollments')
-                              ->whereRaw('seats > enrollments_count')
+                              ->whereRaw('seats > (SELECT COUNT(*) FROM enrollments WHERE enrollable_type = ? AND enrollable_id = courses.id)', [Course::class])
                     ),
                 
                 Tables\Filters\Filter::make('fully_booked')
                     ->label('Fully Booked')
                     ->query(fn (Builder $query): Builder => 
                         $query->withCount('enrollments')
-                              ->whereRaw('seats <= enrollments_count')
+                              ->whereRaw('seats <= (SELECT COUNT(*) FROM enrollments WHERE enrollable_type = ? AND enrollable_id = courses.id)', [Course::class])
                     ),
                 
                 Tables\Filters\TrashedFilter::make(),
@@ -339,7 +361,7 @@ class CourseResource extends Resource
     {
         return [
             RelationManagers\EnrollmentsRelationManager::class,
-            RelationManagers\AssignmentsRelationManager::class,
+            RelationManagers\UnitsRelationManager::class,
         ];
     }
 
@@ -359,7 +381,6 @@ class CourseResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ])
-            ->withCount('enrollments')
             ->withTrashed();
     }
 

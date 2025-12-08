@@ -1,33 +1,35 @@
 <?php
 
-// app/Actions/Discussion/CreateDiscussionAction.php
-
 namespace App\Actions\Discussion;
 
 use App\Models\Discussion;
-use App\Repositories\DiscussionRepository\DiscussionRepository;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class CreateDiscussionAction
 {
-    public function __construct(
-        private DiscussionRepository $repository
-    ) {}
-
+    /**
+     * Execute the action.
+     *
+     * @param array $data
+     * @return Discussion
+     */
     public function execute(array $data): Discussion
     {
-        if (isset($data['image'])) {
-            $data['image'] = $data['image']->store('discussions', 'public');
-        }
+        // لو المستخدم حالياً موجود
+        $userId = Auth::id();
 
-        if (!isset($data['is_published'])) {
-            $data['is_published'] = false;
-        }
+        // لو Filament خزنت الصورة مسبقاً، data['image'] عبارة عن path string
+        $imagePath = $data['image'] ?? null;
 
-        if ($data['is_published'] && !isset($data['published_at'])) {
-            $data['published_at'] = now();
-        }
+        $discussion = Discussion::create([
+            'title'        => $data['title'],
+            'content'      => $data['content'],
+            'image'        => $imagePath,
+            'published_at' => $data['published_at'] ?? now(),
+            'is_published' => $data['is_published'] ?? false,
+            'user_id'      => $userId,
+        ]);
 
-        return $this->repository->create($data);
+        return $discussion;
     }
 }
