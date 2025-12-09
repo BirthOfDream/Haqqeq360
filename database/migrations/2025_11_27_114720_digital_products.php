@@ -15,6 +15,9 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->string('slug')->unique();
+            $table->decimal('price', 10, 2)->default(0);
+            $table->string('image_path')->nullable();
+            $table->decimal('discount_price', 10, 2)->nullable();
             $table->enum('type', ['e-book', 'audio', 'video', 'software'])->default('e-book');
             $table->text('description');
             $table->string('file_path');

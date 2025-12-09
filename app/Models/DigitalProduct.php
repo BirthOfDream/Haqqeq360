@@ -15,6 +15,10 @@ class DigitalProduct extends Model
         'type',
         'description',
         'file_path',
-        'status'
+        'status',
+        'price',
+        'image_path',
+        'discount_price',
+
     ];
 }
