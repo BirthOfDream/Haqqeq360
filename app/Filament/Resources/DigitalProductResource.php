@@ -185,12 +185,13 @@ class DigitalProductResource extends Resource
                             ->title('تم الحذف')
                             ->body('تم حذف المنتج بنجاح.')
                     )
-                    ->errorNotification(
-                        Notification::make()
-                            ->danger()
-                            ->title('خطأ')
-                            ->body('حدث خطأ أثناء حذف المنتج.')
-                    ),
+                    ->after(function ($record, $action) {
+    Notification::make()
+        ->danger()
+        ->title('خطأ')
+        ->body('حدث خطأ أثناء حذف المنتج.')
+        ->send();
+}),
                     
                 Tables\Actions\RestoreAction::make()
                     ->label('استعادة')

@@ -118,4 +118,6 @@ class Course extends Model
         $enrollmentsCount = $this->enrollments_count ?? $this->enrollments()->count();
         return max(0, $this->seats - $enrollmentsCount);
     }
+
+    
 }

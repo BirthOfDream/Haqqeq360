@@ -1,4 +1,7 @@
 <?php
+// ==================================================
+// File: app/Models/Submission.php
+// ==================================================
 
 namespace App\Models;
 
@@ -13,9 +16,20 @@ class Submission extends Model
     protected $fillable = [
         'assignment_id',
         'user_id',
+        'submission_text',
+        'attachment_path',
         'file_url',
+        'score',
+        'feedback',
         'grade',
         'submitted_at',
+        'graded_at',
+    ];
+
+    protected $casts = [
+        'submitted_at' => 'datetime',
+        'graded_at' => 'datetime',
+        'score' => 'decimal:2',
     ];
 
     /*
@@ -30,9 +44,15 @@ class Submission extends Model
         return $this->belongsTo(Assignment::class);
     }
 
-    // Submission belongs to a student
+    // Submission belongs to a student (user)
+    public function student()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    // Alias for backward compatibility
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->student();
     }
 }

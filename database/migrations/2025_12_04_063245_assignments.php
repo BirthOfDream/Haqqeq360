@@ -13,6 +13,7 @@ return new class extends Migration {
             $table->text('description');
             $table->dateTime('due_date')->nullable();
             $table->foreignId('lesson_id')->constrained('lessons')->onDelete('cascade');
+            $table->decimal('max_score', 5, 2)->default(100)->after('due_date');
             $table->timestamps();
             $table->softDeletes();
         });

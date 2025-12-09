@@ -14,7 +14,13 @@ class Assignment extends Model
         'title',
         'description',
         'due_date',
+        'max_score',
         'lesson_id',
+    ];
+
+    protected $casts = [
+        'due_date' => 'datetime',
+        'max_score' => 'decimal:2',
     ];
 
     /*

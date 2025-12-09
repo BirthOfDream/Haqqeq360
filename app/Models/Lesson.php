@@ -17,6 +17,10 @@ class Lesson extends Model
         'published',
     ];
 
+    protected $casts = [
+        'published' => 'boolean',
+    ];
+
     public function unit()
     {
         return $this->belongsTo(Unit::class);
@@ -27,9 +31,17 @@ class Lesson extends Model
     {
         return $this->hasMany(Assignment::class);
     }
- public function course()
-{
-    return $this->belongsTo(\App\Models\Course::class);
-}
-}
 
+    // Get the course through unit
+    public function course()
+    {
+        return $this->hasOneThrough(
+            Course::class,
+            Unit::class,
+            'id', // Foreign key on units table
+            'id', // Foreign key on courses table
+            'unit_id', // Local key on lessons table
+            'unitable_id' // Local key on units table
+        )->where('units.unitable_type', Course::class);
+    }
+}
