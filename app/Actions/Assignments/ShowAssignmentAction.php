@@ -2,7 +2,7 @@
 
 namespace App\Actions\Assignments;
 
-use App\Repositories\Contracts\AssignmentRepositoryInterface;
+use App\Repositories\Interfaces\AssignmentRepositoryInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\Assignment;
 

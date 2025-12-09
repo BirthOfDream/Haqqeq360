@@ -497,6 +497,8 @@ class CourseResource extends Resource
     {
         return [
             RelationManagers\EnrollmentsRelationManager::class,
+                    RelationManagers\AssignmentsRelationManager::class,  // Add this line
+
         ];
     }
 

@@ -442,3 +442,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/comments/{commentId}/like', [DiscussionController::class, 'likeComment']);
     });
 });
+
+use App\Http\Controllers\Api\AssignmentController\AssignmentController;
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/assignments', [AssignmentController::class, 'index']);
+    Route::get('/assignments/{id}', [AssignmentController::class, 'show']);
+});

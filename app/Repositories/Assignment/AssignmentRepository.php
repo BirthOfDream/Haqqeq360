@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Repositories;
+namespace App\Repositories\Assignment;
 
 use App\Models\Assignment;
-use App\Repositories\Contracts\AssignmentRepositoryInterface;
+use App\Repositories\Interfaces\AssignmentRepositoryInterface;
 
 class AssignmentRepository implements AssignmentRepositoryInterface
 {

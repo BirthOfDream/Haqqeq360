@@ -9,6 +9,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Support\Facades\DB;
 
 class Course extends Model
 {
@@ -24,7 +25,7 @@ class Course extends Model
         'mode',
         'cover_image',
         'status',
-        'instructor_id',  // ✅ FIXED: Changed from 'user_id' to 'instructor_id'
+        'instructor_id',
         'price',
         'discounted_price',
         'image_path',
@@ -90,24 +91,22 @@ class Course extends Model
      */
     public function lessons(): HasManyThrough
     {
-        return $this->hasManyThrough(Lesson::class, Unit::class);
+        return $this->hasManyThrough(Lesson::class, Unit::class, 'unitable_id', 'unit_id', 'id', 'id')
+            ->where('units.unitable_type', self::class);
     }
 
     /**
      * Get all assignments for this course through lessons and units
+     * Using a custom HasManyThrough-like relationship
      */
     public function assignments()
     {
-        return Assignment::whereIn('lesson_id', function ($q) {
-            $q->select('id')
-              ->from('lessons')
-              ->whereIn('unit_id', function ($q2) {
-                  $q2->select('id')
-                     ->from('units')
-                     ->where('unitable_id', $this->id)
-                     ->where('unitable_type', self::class);
-              });
-        });
+        return Assignment::query()
+            ->select('assignments.*')
+            ->join('lessons', 'assignments.lesson_id', '=', 'lessons.id')
+            ->join('units', 'lessons.unit_id', '=', 'units.id')
+            ->where('units.unitable_type', self::class)
+            ->where('units.unitable_id', $this->id);
     }
 
     /**
@@ -118,6 +117,4 @@ class Course extends Model
         $enrollmentsCount = $this->enrollments_count ?? $this->enrollments()->count();
         return max(0, $this->seats - $enrollmentsCount);
     }
-
-    
 }

@@ -11,6 +11,8 @@ use App\Repositories\Interfaces\EnrollmentRepositoryInterface;
 use App\Repositories\Enrollment\EnrollmentRepository;
 use App\Repositories\Interfaces\ProgramRepositoryInterface;
 use App\Repositories\Program\ProgramRepository;
+use App\Repositories\Interfaces\AssignmentRepositoryInterface;
+use App\Repositories\Assignment\AssignmentRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -42,6 +44,13 @@ class AppServiceProvider extends ServiceProvider
             EnrollmentRepositoryInterface::class,
             EnrollmentRepository::class
         );
+        
+        // Bind Assignment Repository
+        $this->app->bind(
+            AssignmentRepositoryInterface::class,
+            AssignmentRepository::class
+        );
+
     }
 
     /**

@@ -9,6 +9,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
 
+
 use App\Actions\Assignments\{
     CreateAssignmentAction,
     UpdateAssignmentAction,
@@ -16,7 +17,7 @@ use App\Actions\Assignments\{
     ShowAssignmentAction
 };
 
-use App\Repositories\Contracts\AssignmentRepositoryInterface;
+use App\Repositories\Interfaces\AssignmentRepositoryInterface;
 
 class AssignmentController extends Controller
 {

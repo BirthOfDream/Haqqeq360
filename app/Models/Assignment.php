@@ -11,16 +11,20 @@ class Assignment extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'course_id',
+        'lesson_id',
         'title',
         'description',
         'due_date',
         'max_score',
-        'lesson_id',
+        'attachment_path',
+        'published',
     ];
 
     protected $casts = [
         'due_date' => 'datetime',
         'max_score' => 'decimal:2',
+        'published' => 'boolean',
     ];
 
     /*
@@ -28,6 +32,12 @@ class Assignment extends Model
     | Relationships
     |--------------------------------------------------------------------------
     */
+
+    // Assignment belongs to a course
+    public function course()
+    {
+        return $this->belongsTo(Course::class);
+    }
 
     // Assignment belongs to a lesson
     public function lesson()
