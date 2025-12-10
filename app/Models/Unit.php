@@ -25,4 +25,8 @@ class Unit extends Model
     {
         return $this->hasMany(Lesson::class)->orderBy('order');
     }
+    public function test()
+    {
+        return $this->hasMany(Test::class);
+    }
 }

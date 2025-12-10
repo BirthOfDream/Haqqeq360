@@ -17,6 +17,7 @@ class Discussion extends Model
 
     protected $fillable = [
         'user_id',
+        'course_id',
         'title',
         'content',
         'image',
@@ -56,5 +57,9 @@ class Discussion extends Model
     public function getLikesCountAttribute(): int
     {
         return $this->likes()->count();
+    }
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
     }
 }

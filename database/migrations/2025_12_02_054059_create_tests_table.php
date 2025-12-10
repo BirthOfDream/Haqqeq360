@@ -25,7 +25,9 @@ return new class extends Migration
             // Scheduling
             $table->timestamp('available_from')->nullable();
             $table->timestamp('available_until')->nullable();
-            
+            $table->foreignId('course_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('unit_id')->nullable()->constrained()->onDelete('cascade');
+             $table->foreignId('lesson_id')->nullable()->constrained()->onDelete('cascade');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();

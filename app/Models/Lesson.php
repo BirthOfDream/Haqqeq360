@@ -43,4 +43,8 @@ class Lesson extends Model
             'course_id'  // Local key on units table
         );
     }
+    public function test()
+    {
+        return $this->hasMany(Test::class);
+    }
 }

@@ -26,6 +26,8 @@ class Test extends Model
         'available_from',
         'available_until',
         'is_active',
+        'unit_id',           // Add this
+        'lesson_id', 
     ];
 
     protected $casts = [
@@ -87,4 +89,24 @@ class Test extends Model
 
         return $attemptCount < $this->max_attempts;
     }
+    public function unit()
+{
+    return $this->belongsTo(Unit::class);
+}
+
+public function lesson()
+{
+    return $this->belongsTo(Lesson::class);
+}
+public function course()
+{
+    return $this->hasOneThrough(
+        Course::class,
+        Unit::class,
+        'id',        // Foreign key on units table
+        'id',        // Foreign key on courses table
+        'unit_id',   // Local key on tests table
+        'course_id'  // Local key on units table
+    );
+}
 }

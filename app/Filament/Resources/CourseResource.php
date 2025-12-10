@@ -382,6 +382,183 @@ class CourseResource extends Resource
                     ->collapsed()
                     ->collapsible()
                     ->description('Add assignments to specific lessons in your course'),
+
+                Forms\Components\Section::make('Tests & Quizzes')
+                    ->schema([
+                        Forms\Components\Repeater::make('tests')
+                            ->relationship('tests')
+                            ->schema([
+                                Forms\Components\Grid::make(3)
+                                    ->schema([
+                                        Forms\Components\Select::make('unit_id')
+                                            ->label('Unit')
+                                            ->options(function (Get $get, $livewire) {
+                                                $courseId = $livewire->getRecord()?->id;
+                                                if (!$courseId) {
+                                                    return [];
+                                                }
+                                                return \App\Models\Unit::where('course_id', $courseId)
+                                                    ->orderBy('order')
+                                                    ->pluck('title', 'id')
+                                                    ->toArray();
+                                            })
+                                            ->required()
+                                            ->live()
+                                            ->afterStateUpdated(fn (callable $set) => $set('lesson_id', null))
+                                            ->searchable()
+                                            ->preload(),
+
+                                        Forms\Components\Select::make('lesson_id')
+                                            ->label('Lesson')
+                                            ->options(function (Get $get) {
+                                                $unitId = $get('unit_id');
+                                                if (!$unitId) {
+                                                    return [];
+                                                }
+                                                return \App\Models\Lesson::where('unit_id', $unitId)
+                                                    ->orderBy('order')
+                                                    ->pluck('title', 'id')
+                                                    ->toArray();
+                                            })
+                                            ->required()
+                                            ->live()
+                                            ->searchable()
+                                            ->preload()
+                                            ->disabled(fn (Get $get) => !$get('unit_id'))
+                                            ->helperText('Select a unit first'),
+
+                                        Forms\Components\Placeholder::make('test_location')
+                                            ->label('')
+                                            ->content(function (Get $get) {
+                                                $unitId = $get('unit_id');
+                                                $lessonId = $get('lesson_id');
+                                                
+                                                if ($unitId && $lessonId) {
+                                                    $unit = \App\Models\Unit::find($unitId);
+                                                    $lesson = \App\Models\Lesson::find($lessonId);
+                                                    return '📍 ' . $unit?->title . ' → ' . $lesson?->title;
+                                                }
+                                                
+                                                return 'Select unit and lesson';
+                                            }),
+                                    ]),
+
+                                Forms\Components\TextInput::make('title')
+                                    ->label('Test Title')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->columnSpanFull(),
+
+                                Forms\Components\Textarea::make('description')
+                                    ->label('Test Description')
+                                    ->rows(3)
+                                    ->columnSpanFull(),
+
+                                Forms\Components\Grid::make(3)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('duration_minutes')
+                                            ->label('Duration (Minutes)')
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->suffix('minutes')
+                                            ->helperText('Leave empty for no time limit'),
+
+                                        Forms\Components\TextInput::make('passing_score')
+                                            ->label('Passing Score (%)')
+                                            ->required()
+                                            ->numeric()
+                                            ->default(50)
+                                            ->minValue(0)
+                                            ->maxValue(100)
+                                            ->suffix('%'),
+
+                                        Forms\Components\TextInput::make('max_attempts')
+                                            ->label('Maximum Attempts')
+                                            ->required()
+                                            ->numeric()
+                                            ->default(1)
+                                            ->minValue(1),
+                                    ]),
+
+                                Forms\Components\Grid::make(3)
+                                    ->schema([
+                                        Forms\Components\Toggle::make('shuffle_questions')
+                                            ->label('Shuffle Questions')
+                                            ->helperText('Randomize question order'),
+
+                                        Forms\Components\Toggle::make('show_correct_answers')
+                                            ->label('Show Correct Answers')
+                                            ->default(true)
+                                            ->helperText('After submission'),
+
+                                        Forms\Components\Toggle::make('show_results_immediately')
+                                            ->label('Show Results Immediately')
+                                            ->default(true),
+                                    ]),
+
+                                Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        Forms\Components\DateTimePicker::make('available_from')
+                                            ->label('Available From')
+                                            ->native(false)
+                                            ->helperText('Leave empty for immediate availability'),
+
+                                        Forms\Components\DateTimePicker::make('available_until')
+                                            ->label('Available Until')
+                                            ->native(false)
+                                            ->helperText('Leave empty for no end date'),
+                                    ]),
+
+                                Forms\Components\Toggle::make('is_active')
+                                    ->label('Active')
+                                    ->default(true)
+                                    ->helperText('Inactive tests are hidden from students')
+                                    ->columnSpanFull(),
+
+                                Forms\Components\Placeholder::make('questions_note')
+                                    ->content('⚠️ Questions can be added after creating the test by clicking "Edit Test" or using the Questions tab.')
+                                    ->columnSpanFull(),
+                            ])
+                            ->mutateRelationshipDataBeforeCreateUsing(function (array $data, $livewire): array {
+                                $courseId = $livewire->getRecord()?->id;
+                                $data['testable_type'] = 'App\\Models\\Course';
+                                $data['testable_id'] = $courseId;
+                                return $data;
+                            })
+                            ->mutateRelationshipDataBeforeSaveUsing(function (array $data, $livewire): array {
+                                $courseId = $livewire->getRecord()?->id;
+                                $data['testable_type'] = 'App\\Models\\Course';
+                                $data['testable_id'] = $courseId;
+                                return $data;
+                            })
+                            ->itemLabel(function (array $state): ?string {
+                                if (!isset($state['title'])) {
+                                    return 'New Test';
+                                }
+                                
+                                $unit = isset($state['unit_id']) ? \App\Models\Unit::find($state['unit_id']) : null;
+                                $lesson = isset($state['lesson_id']) ? \App\Models\Lesson::find($state['lesson_id']) : null;
+                                
+                                $location = '';
+                                if ($unit && $lesson) {
+                                    $location = " (Unit {$unit->order} → Lesson {$lesson->order})";
+                                }
+                                
+                                return $state['title'] . $location;
+                            })
+                            ->collapsed()
+                            ->collapsible()
+                            ->columnSpanFull()
+                            ->defaultItems(0)
+                            ->addActionLabel('Add Test')
+                            ->cloneable()
+                            ->reorderable(false)
+                            ->orderColumn(false),
+                    ])
+                    ->columnSpanFull()
+                    ->collapsed()
+                    ->collapsible()
+                    ->description('Add tests and quizzes to specific lessons in your course'),
             ]);
     }
 
@@ -548,8 +725,8 @@ class CourseResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+    Tables\Actions\ViewAction::make()
+        ->url(fn (Course $record): string => static::getUrl('edit', ['record' => $record])),                Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\ForceDeleteAction::make(),
                 Tables\Actions\RestoreAction::make(),
@@ -610,8 +787,7 @@ class CourseResource extends Resource
             'edit' => Pages\EditCourse::route('/{record}/edit'),
             'view-unit' => Pages\ViewUnit::route('/{record}/units/{unit}'),
             'lessons.view' => Pages\ViewLesson::route('/{record}/lessons/{lesson}'),
-            'knowledge-base' => Pages\ManageKnowledgeBase::route('/{record}/knowledge-base'), // Add this line
-
+            'knowledge-base' => Pages\ManageKnowledgeBase::route('/{record}/knowledge-base'),
         ];
     }
 

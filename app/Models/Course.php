@@ -97,4 +97,12 @@ class Course extends Model
     {
         return $this->hasMany(KnowledgeBaseArticle::class)->orderBy('created_at', 'desc');
     }
+    public function tests()
+    {
+        return $this->hasMany(Test::class);
+    }
+    public function discussions()
+    {
+        return $this->hasMany(Discussion::class);
+    }
 }
