@@ -24,7 +24,7 @@ class KnowledgeBaseArticleResource extends Resource
     
     protected static ?string $pluralModelLabel = 'المقالات';
     
-    protected static ?string $navigationGroup = 'إدارة المحتوى';
+    protected static ?string $navigationGroup = 'ONLY FOR DEVELOPERS';
     
     protected static ?int $navigationSort = 3;
 

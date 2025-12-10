@@ -26,7 +26,7 @@ class DiscussionResource extends Resource
 
     protected static ?string $navigationLabel = 'المناقشات';
 
-    protected static ?string $navigationGroup = 'المحتوى';
+    protected static ?string $navigationGroup = 'ONLY FOR DEVELOPERS';
 
     public static function form(Form $form): Form
     {

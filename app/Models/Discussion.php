@@ -18,6 +18,8 @@ class Discussion extends Model
     protected $fillable = [
         'user_id',
         'course_id',
+            'unit_id',      // Add this
+    'lesson_id',
         'title',
         'content',
         'image',

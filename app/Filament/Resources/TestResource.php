@@ -20,7 +20,7 @@ class TestResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
     
-    protected static ?string $navigationGroup = 'Testing';
+    protected static ?string $navigationGroup = 'ONLY FOR DEVELOPERS';
 
     public static function form(Form $form): Form
     {

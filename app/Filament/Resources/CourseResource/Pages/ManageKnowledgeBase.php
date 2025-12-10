@@ -31,12 +31,12 @@ class ManageKnowledgeBase extends ManageRelatedRecords
 
     public static function getNavigationLabel(): string
     {
-        return 'Knowledge Base';
+        return 'موسوعة المعرفة';
     }
 
     public function getTitle(): string | Htmlable
     {
-        return 'Knowledge Base Articles - ' . $this->getRecord()->title;
+        return 'مقالات موسوعة المعرفة - ' . $this->getRecord()->title;
     }
 
     public function getBreadcrumb(): string

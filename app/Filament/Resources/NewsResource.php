@@ -21,7 +21,7 @@ class NewsResource extends Resource
     
     protected static ?string $navigationGroup = 'إدارة صفحات الموقع';
     
-    protected static ?string $navigationLabel = 'الأخبار';
+    protected static ?string $navigationLabel = 'نشرة بريدية';
     
     protected static ?string $pluralModelLabel = 'الأخبار';
     

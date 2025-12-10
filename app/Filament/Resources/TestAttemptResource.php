@@ -18,7 +18,7 @@ class TestAttemptResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-check';
     
-    protected static ?string $navigationGroup = 'Testing';
+    protected static ?string $navigationGroup = 'ONLY FOR DEVELOPERS';
     
     protected static ?string $navigationLabel = 'Test Submissions';
 

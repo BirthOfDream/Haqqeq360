@@ -382,7 +382,183 @@ class CourseResource extends Resource
                     ->collapsed()
                     ->collapsible()
                     ->description('Add assignments to specific lessons in your course'),
+                Forms\Components\Section::make('Discussions')
+    ->schema([
+        Forms\Components\Repeater::make('discussions')
+            ->relationship('discussions')
+            ->schema([
+                Forms\Components\Grid::make(3)
+                    ->schema([
+                        Forms\Components\Select::make('unit_id')
+                            ->label('Unit')
+                            ->options(function (Get $get, $livewire) {
+                                $courseId = $livewire->getRecord()?->id;
+                                if (!$courseId) {
+                                    return [];
+                                }
+                                return \App\Models\Unit::where('course_id', $courseId)
+                                    ->orderBy('order')
+                                    ->pluck('title', 'id')
+                                    ->toArray();
+                            })
+                            ->live()
+                            ->afterStateUpdated(fn (callable $set) => $set('lesson_id', null))
+                            ->searchable()
+                            ->preload()
+                            ->helperText('Optional: Select a unit to link this discussion'),
 
+                        Forms\Components\Select::make('lesson_id')
+                            ->label('Lesson')
+                            ->options(function (Get $get) {
+                                $unitId = $get('unit_id');
+                                if (!$unitId) {
+                                    return [];
+                                }
+                                return \App\Models\Lesson::where('unit_id', $unitId)
+                                    ->orderBy('order')
+                                    ->pluck('title', 'id')
+                                    ->toArray();
+                            })
+                            ->live()
+                            ->searchable()
+                            ->preload()
+                            ->disabled(fn (Get $get) => !$get('unit_id'))
+                            ->helperText('Optional: Select a lesson'),
+
+                        Forms\Components\Placeholder::make('discussion_location')
+                            ->label('')
+                            ->content(function (Get $get) {
+                                $unitId = $get('unit_id');
+                                $lessonId = $get('lesson_id');
+                                
+                                if ($unitId && $lessonId) {
+                                    $unit = \App\Models\Unit::find($unitId);
+                                    $lesson = \App\Models\Lesson::find($lessonId);
+                                    return '📍 ' . $unit?->title . ' → ' . $lesson?->title;
+                                } elseif ($unitId) {
+                                    $unit = \App\Models\Unit::find($unitId);
+                                    return '📍 ' . $unit?->title . ' (General Unit Discussion)';
+                                }
+                                
+                                return '📍 General Course Discussion';
+                            }),
+                    ]),
+
+                Forms\Components\TextInput::make('title')
+                    ->label('Discussion Title')
+                    ->required()
+                    ->maxLength(255)
+                    ->columnSpanFull(),
+
+                Forms\Components\RichEditor::make('content')
+                    ->label('Discussion Content')
+                    ->required()
+                    ->columnSpanFull()
+                    ->toolbarButtons([
+                        'bold',
+                        'italic',
+                        'link',
+                        'bulletList',
+                        'orderedList',
+                        'blockquote',
+                    ]),
+
+                Forms\Components\FileUpload::make('image')
+                    ->label('Discussion Image')
+                    ->image()
+                    ->imageEditor()
+                    ->directory('discussions')
+                    ->maxSize(2048)
+                    ->helperText('Optional image for the discussion (max 2MB)')
+                    ->columnSpanFull(),
+
+                Forms\Components\Grid::make(2)
+                    ->schema([
+                        Forms\Components\Select::make('user_id')
+                            ->label('Author')
+                            ->relationship('user', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->default(fn () => auth()->id())
+                            ->helperText('User who started this discussion'),
+
+                        Forms\Components\DateTimePicker::make('published_at')
+                            ->label('Published At')
+                            ->native(false)
+                            ->helperText('Leave empty to publish immediately'),
+                    ]),
+
+                Forms\Components\Toggle::make('is_published')
+                    ->label('Published')
+                    ->default(true)
+                    ->helperText('Is this discussion visible to students?')
+                    ->columnSpanFull(),
+
+                Forms\Components\Placeholder::make('stats')
+                    ->label('Discussion Stats')
+                    ->content(function ($record) {
+                        if (!$record) {
+                            return 'Save the discussion to see stats';
+                        }
+                        
+                        $commentsCount = $record->comments()->count();
+                        $likesCount = $record->likes()->count();
+                        
+                        return "💬 {$commentsCount} Comments | 👍 {$likesCount} Likes";
+                    })
+                    ->columnSpanFull(),
+            ])
+            ->mutateRelationshipDataBeforeCreateUsing(function (array $data, $livewire): array {
+                $data['course_id'] = $livewire->getRecord()?->id;
+                if (empty($data['user_id'])) {
+                    $data['user_id'] = auth()->id();
+                }
+                if (empty($data['published_at']) && $data['is_published']) {
+                    $data['published_at'] = now();
+                }
+                return $data;
+            })
+            ->mutateRelationshipDataBeforeSaveUsing(function (array $data, $livewire): array {
+                $data['course_id'] = $livewire->getRecord()?->id;
+                if (empty($data['published_at']) && $data['is_published']) {
+                    $data['published_at'] = now();
+                }
+                return $data;
+            })
+            ->itemLabel(function (array $state): ?string {
+                if (!isset($state['title'])) {
+                    return 'New Discussion';
+                }
+                
+                $status = ($state['is_published'] ?? false) ? '✅' : '📝';
+                $title = $state['title'];
+                
+                $unit = isset($state['unit_id']) ? \App\Models\Unit::find($state['unit_id']) : null;
+                $lesson = isset($state['lesson_id']) ? \App\Models\Lesson::find($state['lesson_id']) : null;
+                
+                $location = '';
+                if ($unit && $lesson) {
+                    $location = " (U{$unit->order} → L{$lesson->order})";
+                } elseif ($unit) {
+                    $location = " (Unit {$unit->order})";
+                }
+                
+                return $status . ' ' . $title . $location;
+            })
+            ->collapsed()
+            ->collapsible()
+            ->columnSpanFull()
+            ->defaultItems(0)
+            ->addActionLabel('Add Discussion')
+            ->cloneable()
+            ->reorderable(false)
+            ->orderColumn(false),
+    ])
+    ->columnSpanFull()
+    ->collapsed()
+    ->collapsible()
+    ->description('Manage course discussions. Link them to specific lessons or keep them as general course discussions.'),
                 Forms\Components\Section::make('Tests & Quizzes')
                     ->schema([
                         Forms\Components\Repeater::make('tests')
@@ -442,6 +618,7 @@ class CourseResource extends Resource
                                                 return 'Select unit and lesson';
                                             }),
                                     ]),
+                                    
 
                                 Forms\Components\TextInput::make('title')
                                     ->label('Test Title')
