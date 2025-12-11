@@ -125,20 +125,123 @@ class CourseController extends Controller
         ]);
     }
 
-    public function showLesson(Request $request, int $courseId, int $lessonId, ShowLessonAction $action)
-    {
-        $lesson = $action->execute($courseId, $lessonId);
+    // public function showLesson(Request $request, int $courseId, int $lessonId, ShowLessonAction $action)
+    // {
+    //     $lesson = $action->execute($courseId, $lessonId);
         
-        if (!$lesson) {
+    //     if (!$lesson) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Lesson not found or does not belong to this course'
+    //         ], 404);
+    //     }
+        
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => $lesson
+    //     ]);
+    // }
+
+    public function downloadCourseBooklet(Request $request, int $courseId)
+    {
+        $course = \App\Models\Course::find($courseId);
+        
+        if (!$course || !$course->course_booklet) {
             return response()->json([
                 'success' => false,
-                'message' => 'Lesson not found or does not belong to this course'
+                'message' => 'Course or booklet not found'
             ], 404);
         }
         
-        return response()->json([
-            'success' => true,
-            'data' => $lesson
-        ]);
+        $filePath = storage_path('app/public/' . $course->course_booklet);
+        
+        if (!file_exists($filePath)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Booklet file not found'
+            ], 404);
+        }
+        
+        return response()->download($filePath, basename($filePath));
     }
+
+public function showUnits(Request $request, int $courseId)
+{
+    $units = \App\Models\Unit::with([
+        'lessons' => function ($query) {
+            $query->orderBy('order');
+        }
+    ])
+        ->withCount('lessons')
+        ->where('course_id', $courseId)
+        ->orderBy('order')
+        ->get();
+    
+    if ($units->isEmpty()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'No units found for this course'
+        ], 404);
+    }
+    
+    return response()->json([
+        'success' => true,
+        'data' => $units
+    ]);
+}
+
+   public function showunitlessons(Request $request, int $courseId, int $unitId)
+{
+    $unit = \App\Models\Unit::with([
+        'lessons' => function ($query) {
+            $query->orderBy('order');
+        }
+    ])
+        ->where('course_id', $courseId)
+        ->find($unitId);
+    
+    if (!$unit) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unit not found'
+        ], 404);
+    }
+    
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'unit' => [
+                'id' => $unit->id,
+                'title' => $unit->title,
+                'order' => $unit->order
+            ],
+            'lessons' => $unit->lessons
+        ]
+    ]);
+}
+
+public function showLesson(Request $request, int $courseId, int $unitId, int $lessonId)
+{
+    $lesson = \App\Models\Lesson::with([
+        'unit:id,title,order,course_id',
+        'unit.course:id,title'
+    ])
+        ->whereHas('unit', function ($query) use ($courseId, $unitId) {
+            $query->where('id', $unitId)
+                  ->where('course_id', $courseId);
+        })
+        ->find($lessonId);
+    
+    if (!$lesson) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Lesson not found'
+        ], 404);
+    }
+    
+    return response()->json([
+        'success' => true,
+        'data' => $lesson
+    ]);
+}
 }

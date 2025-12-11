@@ -86,7 +86,11 @@ class CourseResource extends Resource
                             ->directory('course-covers')
                             ->visibility('public')
                             ->columnSpanFull(),
-                        
+                                                Forms\Components\FileUpload::make('course_booklet')
+                            ->file()
+                            ->directory('course-booklets')
+                            ->visibility('public')
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('price')
                             ->numeric()
                             ->prefix('$')

@@ -13,7 +13,7 @@ class ShowCourseAction
             'assignments:id,course_id,title,description,due_date',
             'enrollments.user:id,name,email'
         ])
-            ->withCount('enrollments')
+            ->withCount(['enrollments', 'units'])
             ->where('status', 'published')
             ->find($id);
 

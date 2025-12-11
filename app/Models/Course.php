@@ -28,6 +28,7 @@ class Course extends Model
         'price',
         'discounted_price',
         'image_path',
+        'course_booklet',
     ];
 
     protected $casts = [

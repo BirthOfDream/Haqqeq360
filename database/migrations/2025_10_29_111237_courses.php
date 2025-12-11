@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('cover_image')->nullable();
             $table->enum('status', ['draft', 'published'])->default('draft');
             $table->foreignId('instructor_id')->constrained('users')->onDelete('cascade');
+            $table->string('course_booklet')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

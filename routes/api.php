@@ -457,7 +457,12 @@ Route::prefix('courses')->group(function () {
     Route::get('/filter', [CourseController::class, 'filter']);
     Route::get('/{id}', [CourseController::class, 'show']);
     
-    // Lesson routes
-    Route::get('/{courseId}/lessons', [CourseController::class, 'lessons']);
-    Route::get('/{courseId}/lessons/{lessonId}', [CourseController::class, 'showLesson']);
+    Route::get('/{courseId}/download_booklet', [CourseController::class, 'downloadCourseBooklet']);
+
+    Route::get('/{courseId}/units', [CourseController::class, 'showUnits']);
+    Route::get('/{courseId}/units/{unitId}/lessons', [CourseController::class, 'showunitlessons']);
+
+   Route::get('/{courseId}/units/{unitId}/lessons/{lessonId}', [CourseController::class, 'showLesson']);
+
+    
 });
