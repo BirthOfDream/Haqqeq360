@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class AssignmentController extends Controller
 {
@@ -105,6 +107,201 @@ class AssignmentController extends Controller
                     'is_graded' => $submission->grade !== null,
                 ] : null,
             ],
+        ]);
+    }
+
+    /**
+     * Get assignments valid for a specific date
+     * GET /api/assignments/by-date?date=2024-12-15
+     */
+    public function getByValidityDate(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'date' => 'required|date',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $date = Carbon::parse($request->date);
+        $userId = auth()->id();
+
+        // Get assignments where the due date is on or after the provided date
+        // and the assignment is published
+        $assignments = Assignment::with(['course', 'unit', 'lesson'])
+            ->where('published', true)
+            ->where(function($query) use ($date) {
+                $query->whereNull('due_date')
+                      ->orWhere('due_date', '>=', $date);
+            })
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        $submissions = Submission::where('user_id', $userId)
+            ->whereIn('assignment_id', $assignments->pluck('id'))
+            ->get()
+            ->keyBy('assignment_id');
+
+        return response()->json([
+            'success' => true,
+            'query_date' => $date->toDateString(),
+            'data' => $assignments->map(function ($assignment) use ($submissions) {
+                $submission = $submissions->get($assignment->id);
+                
+                return [
+                    'id' => $assignment->id,
+                    'title' => $assignment->title,
+                    'description' => $assignment->description,
+                    'due_date' => $assignment->due_date,
+                    'max_score' => $assignment->max_score,
+                    'course' => [
+                        'id' => $assignment->course->id,
+                        'name' => $assignment->course->name ?? $assignment->course->title,
+                    ],
+                    'unit' => [
+                        'id' => $assignment->unit->id,
+                        'name' => $assignment->unit->name ?? $assignment->unit->title,
+                    ],
+                    'lesson' => [
+                        'id' => $assignment->lesson->id,
+                        'name' => $assignment->lesson->name ?? $assignment->lesson->title,
+                    ],
+                    'attachment_url' => $assignment->attachment_path 
+                        ? Storage::url($assignment->attachment_path) 
+                        : null,
+                    'is_overdue' => $assignment->due_date && now()->isAfter($assignment->due_date),
+                    'days_until_due' => $assignment->due_date 
+                        ? now()->diffInDays($assignment->due_date, false) 
+                        : null,
+                    'user_submission' => $submission ? [
+                        'id' => $submission->id,
+                        'file_url' => Storage::url($submission->file_url),
+                        'grade' => $submission->grade,
+                        'submitted_at' => $submission->submitted_at,
+                        'is_graded' => $submission->grade !== null,
+                    ] : null,
+                ];
+            }),
+        ]);
+    }
+
+    /**
+     * Get assignments in progress with points summary
+     * GET /api/assignments/in-progress
+     */
+    public function getInProgress(): JsonResponse
+    {
+        $userId = auth()->id();
+        $now = now();
+        $sixMonthsAgo = $now->copy()->subMonths(6);
+        $oneYearAgo = $now->copy()->subYear();
+
+        // Get assignments that are:
+        // 1. Published
+        // 2. Either have no due date OR due date is in the future
+        // 3. User has NOT submitted OR submitted but not graded yet
+        $assignments = Assignment::with(['course', 'unit', 'lesson'])
+            ->where('published', true)
+            ->where(function($query) use ($now) {
+                $query->whereNull('due_date')
+                      ->orWhere('due_date', '>=', $now);
+            })
+            ->whereHas('submissions', function($query) use ($userId) {
+                $query->where('user_id', $userId)
+                      ->whereNull('grade');
+            }, '<=', 1)
+            ->whereDoesntHave('submissions', function($query) use ($userId) {
+                $query->where('user_id', $userId)
+                      ->whereNotNull('grade');
+            })
+            ->orderBy('due_date', 'asc')
+            ->get();
+
+        // Get user submissions for these assignments
+        $submissions = Submission::where('user_id', $userId)
+            ->whereIn('assignment_id', $assignments->pluck('id'))
+            ->get()
+            ->keyBy('assignment_id');
+
+        // Calculate points for last 6 months
+        $pointsLast6Months = Submission::where('user_id', $userId)
+            ->whereNotNull('grade')
+            ->where('submitted_at', '>=', $sixMonthsAgo)
+            ->sum('grade');
+
+        // Calculate points for last year
+        $pointsLastYear = Submission::where('user_id', $userId)
+            ->whereNotNull('grade')
+            ->where('submitted_at', '>=', $oneYearAgo)
+            ->sum('grade');
+
+        // Get detailed breakdown by month for last 6 months
+        $monthlyBreakdown = Submission::where('user_id', $userId)
+            ->whereNotNull('grade')
+            ->where('submitted_at', '>=', $sixMonthsAgo)
+            ->select(
+                DB::raw('DATE_FORMAT(submitted_at, "%Y-%m") as month'),
+                DB::raw('SUM(grade) as total_points'),
+                DB::raw('COUNT(*) as assignments_completed')
+            )
+            ->groupBy('month')
+            ->orderBy('month', 'asc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'points_summary' => [
+                'last_6_months' => (float) $pointsLast6Months,
+                'last_year' => (float) $pointsLastYear,
+                'monthly_breakdown' => $monthlyBreakdown->map(function($item) {
+                    return [
+                        'month' => $item->month,
+                        'points' => (float) $item->total_points,
+                        'assignments_completed' => $item->assignments_completed,
+                    ];
+                }),
+            ],
+            'in_progress_count' => $assignments->count(),
+            'data' => $assignments->map(function ($assignment) use ($submissions) {
+                $submission = $submissions->get($assignment->id);
+                
+                return [
+                    'id' => $assignment->id,
+                    'title' => $assignment->title,
+                    'description' => $assignment->description,
+                    'due_date' => $assignment->due_date,
+                    'max_score' => $assignment->max_score,
+                    'course' => [
+                        'id' => $assignment->course->id,
+                        'name' => $assignment->course->name ?? $assignment->course->title,
+                    ],
+                    'unit' => [
+                        'id' => $assignment->unit->id,
+                        'name' => $assignment->unit->name ?? $assignment->unit->title,
+                    ],
+                    'lesson' => [
+                        'id' => $assignment->lesson->id,
+                        'name' => $assignment->lesson->name ?? $assignment->lesson->title,
+                    ],
+                    'attachment_url' => $assignment->attachment_path 
+                        ? Storage::url($assignment->attachment_path) 
+                        : null,
+                    'is_overdue' => $assignment->due_date && now()->isAfter($assignment->due_date),
+                    'days_until_due' => $assignment->due_date 
+                        ? now()->diffInDays($assignment->due_date, false) 
+                        : null,
+                    'status' => $submission ? 'submitted_ungraded' : 'not_submitted',
+                    'user_submission' => $submission ? [
+                        'id' => $submission->id,
+                        'file_url' => Storage::url($submission->file_url),
+                        'submitted_at' => $submission->submitted_at,
+                    ] : null,
+                ];
+            }),
         ]);
     }
 

@@ -468,21 +468,36 @@ use App\Http\Controllers\Api\SubmissionController\SubmissionController;
 
 // Assignment Routes (Student Access)
 Route::middleware(['auth:sanctum'])->group(function () {
-    Route::prefix('courses/{courseId}/units/{unitId}/lessons/{lessonId}/assignments')->group(function () {
-        // Get all assignments for a lesson
-        Route::get('/', [AssignmentController::class, 'getByLesson']);
-        
-        // Get specific assignment
-        Route::get('/{id}', [AssignmentController::class, 'show']);
-        
-        // Submit assignment
-        Route::post('/{id}/submit', [AssignmentController::class, 'submit']);
-        
-        // Resubmit assignment
-        Route::put('/{id}/resubmit', [AssignmentController::class, 'resubmit']);
-    });
+    
+    // NEW ENDPOINTS
+    
+    // Get assignments by validity date
+    // GET /api/assignments/by-date?date=2024-12-15
+    Route::get('/assignments/by-date', [AssignmentController::class, 'getByValidityDate']);
+    
+    // Get assignments in progress with points summary
+    // GET /api/assignments/in-progress
+    Route::get('/assignments/in-progress', [AssignmentController::class, 'getInProgress']);
+    
+    
+    // EXISTING ENDPOINTS
+    
+    // Get assignments by lesson
+    Route::get('/courses/{courseId}/units/{unitId}/lessons/{lessonId}/assignments', 
+        [AssignmentController::class, 'getByLesson']);
+    
+    // Get specific assignment
+    Route::get('/courses/{courseId}/units/{unitId}/lessons/{lessonId}/assignments/{id}', 
+        [AssignmentController::class, 'show']);
+    
+    // Submit assignment
+    Route::post('/courses/{courseId}/units/{unitId}/lessons/{lessonId}/assignments/{id}/submit', 
+        [AssignmentController::class, 'submit']);
+    
+    // Resubmit assignment
+    Route::put('/courses/{courseId}/units/{unitId}/lessons/{lessonId}/assignments/{id}/resubmit', 
+        [AssignmentController::class, 'resubmit']);
 });
-
 // Submission Routes (Student Access)
 Route::middleware(['auth:sanctum'])->prefix('submissions')->group(function () {
     // Get all user's submissions
@@ -503,3 +518,4 @@ Route::middleware(['auth:sanctum'])->prefix('submissions')->group(function () {
     // Get pending submissions
     Route::get('/pending/list', [SubmissionController::class, 'getPendingSubmissions']);
 });
+

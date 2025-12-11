@@ -13,7 +13,7 @@ return new class extends Migration {
             $table->foreignId('answer_id')
                   ->constrained('case_study_answers')
                   ->cascadeOnDelete();
-
+            $table->foreignId('case_study_id')->constrained('case_studies')->cascadeOnDelete();
             $table->string('file_path');
             $table->string('original_name');
 
