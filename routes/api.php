@@ -387,9 +387,6 @@ Route::prefix('learner')->group(function () {
 });
 
 
-
-
-
 use App\Http\Controllers\Api\LinkTreeController\LinkTreeController;
 
 Route::prefix('link-tree')->group(function () {
@@ -463,8 +460,6 @@ Route::prefix('courses')->group(function () {
     Route::get('/{courseId}/units/{unitId}/lessons', [CourseController::class, 'showunitlessons']);
 
    Route::get('/{courseId}/units/{unitId}/lessons/{lessonId}', [CourseController::class, 'showLesson']);
-
-    
 });
 
 

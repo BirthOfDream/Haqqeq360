@@ -10,7 +10,7 @@ return new class extends Migration {
         Schema::create('case_study_answers', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('case_study_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('case_study_id')->constrained('case_studies')->cascadeOnDelete();
             $table->foreignId('learner_id')->constrained('users')->cascadeOnDelete();
 
             $table->longText('answer_text')->nullable();
